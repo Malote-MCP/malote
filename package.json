@@ -1,0 +1,16 @@
+{
+  "name": "malote",
+  "private": true,
+  "packageManager": "pnpm@10.18.0",
+  "scripts": {
+    "dev:web": "pnpm --filter @malote/web dev",
+    "dev:worker": "pnpm --filter @malote/worker dev",
+    "build": "pnpm --filter @malote/web build && pnpm --filter @malote/worker typecheck",
+    "db:generate": "pnpm --filter @malote/db generate",
+    "db:migrate": "pnpm --filter @malote/db migrate"
+  },
+  "dependencies": {
+    "@neon/config": "^1.9.5",
+    "@neon/env": "^1.6.6"
+  }
+}

@@ -1,0 +1,12 @@
+app = "malote-worker"
+primary_region = "gru"
+
+[build]
+  dockerfile = "apps/worker/Dockerfile"
+
+# No [http_service]: the worker only makes outbound connections (WhatsApp + Neon).
+# Run exactly one machine — two workers would fight over the same WhatsApp sessions.
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"
