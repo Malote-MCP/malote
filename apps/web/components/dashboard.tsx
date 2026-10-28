@@ -23,7 +23,7 @@ function formatPhone(p: string | null) {
   return m ? `+55 (${m[1]}) ${m[2]}-${m[3]}` : `+${p}`;
 }
 
-function ConnectionCard() {
+function ConnectionCard({ hasKey }: { hasKey: boolean }) {
   const [s, setS] = useState<Status | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -53,7 +53,7 @@ function ConnectionCard() {
     <section className="rounded-3xl border border-line bg-white/70 p-6 sm:p-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 className="font-display text-2xl font-semibold tracking-tight">WhatsApp</h2>
+          <h2 className="font-display text-2xl font-semibold tracking-tight">2. WhatsApp</h2>
           <p className="mt-1 text-sm text-ink-3">O Malote entra como um aparelho vinculado, igual ao WhatsApp Web.</p>
         </div>
         {s?.status === "connected" ? (
@@ -93,6 +93,8 @@ function ConnectionCard() {
               <img src={s.qr} alt="QR code para conectar o WhatsApp" width={240} height={240} />
             ) : waiting ? (
               <p className="px-6 text-center text-sm text-ink-3">Gerando QR code…</p>
+            ) : !hasKey ? (
+              <p className="px-6 text-center text-sm text-ink-3">Gere seu token (passo 1) antes de conectar.</p>
             ) : (
               <button
                 onClick={() => act("connect")}
@@ -151,15 +153,18 @@ function CopyBlock({ label, value }: { label: string; value: string }) {
   );
 }
 
-function McpCard() {
+function McpCard({ hasKey, onKey }: { hasKey: boolean; onKey: (v: boolean) => void }) {
   const [tokens, setTokens] = useState<Token[]>([]);
   const [fresh, setFresh] = useState<string | null>(null);
   const [origin, setOrigin] = useState("https://malote.fly.dev");
 
   const load = useCallback(async () => {
     const res = await fetch("/api/tokens", { cache: "no-store" });
-    if (res.ok) setTokens(await res.json());
-  }, []);
+    if (!res.ok) return;
+    const body = (await res.json()) as { tokens: Token[]; hasKey: boolean };
+    setTokens(body.tokens);
+    onKey(body.hasKey);
+  }, [onKey]);
 
   useEffect(() => {
     setOrigin(window.location.origin);
@@ -167,11 +172,30 @@ function McpCard() {
   }, [load]);
 
   async function create() {
-    const name = prompt("Nome do token (ex.: Claude Code no notebook)", "Claude") ?? "";
-    const res = await fetch("/api/tokens", { method: "POST", body: JSON.stringify({ name }) });
+    const name = prompt("Nome do token (ex.: Claude Code no notebook)", "Claude");
+    if (name === null) return;
+    let body: { name: string; authorizeWith?: string; reset?: boolean } = { name };
+    if (hasKey) {
+      // The token unlocks the encryption key, so a new one has to be authorized by an existing one.
+      const existing = prompt(
+        "Seu histórico é cifrado com uma chave que só os seus tokens destravam. Cole um token atual para autorizar o novo (o mesmo token também serve em vários clientes). Deixe vazio se perdeu todos.",
+      );
+      if (existing === null) return;
+      if (existing.trim()) body = { name, authorizeWith: existing.trim() };
+      else if (
+        confirm(
+          "Sem um token atual não há como abrir seu histórico cifrado: ele será apagado e uma chave nova será criada. Todos os tokens atuais deixam de funcionar. Para recuperar o histórico, desconecte e conecte o WhatsApp de novo. Continuar?",
+        )
+      )
+        body = { name, reset: true };
+      else return;
+    }
+    const res = await fetch("/api/tokens", { method: "POST", body: JSON.stringify(body) });
     if (res.ok) {
       setFresh((await res.json()).token);
       void load();
+    } else {
+      alert(((await res.json().catch(() => ({}))) as { error?: string }).error ?? "Não foi possível gerar o token.");
     }
   }
 
@@ -202,8 +226,11 @@ function McpCard() {
     <section className="rounded-3xl border border-line bg-white/70 p-6 sm:p-8">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h2 className="font-display text-2xl font-semibold tracking-tight">Conectar no Claude</h2>
-          <p className="mt-1 text-sm text-ink-3">Cada token dá acesso total ao seu WhatsApp via MCP. Guarde como uma senha.</p>
+          <h2 className="font-display text-2xl font-semibold tracking-tight">1. Token do Claude</h2>
+          <p className="mt-1 text-sm text-ink-3">
+            O token dá acesso ao seu WhatsApp via MCP e é a chave que decifra seu histórico. Nem o Malote consegue ler sem
+            ele. Guarde como uma senha: se perder todos, o histórico guardado não pode ser recuperado.
+          </p>
         </div>
         <button onClick={create} className="rounded-full bg-ink px-4 py-2 text-sm font-medium text-paper hover:bg-ink-2">
           Gerar token
@@ -212,7 +239,7 @@ function McpCard() {
 
       {fresh && (
         <div className="mt-6 rounded-2xl border border-moss/30 bg-moss-soft p-4">
-          <p className="text-sm font-medium text-moss">Copie agora — este token não será mostrado de novo.</p>
+          <p className="text-sm font-medium text-moss">Copie agora: este token não será mostrado de novo, e não temos como recuperá-lo.</p>
           <code className="mt-2 block break-all font-mono text-sm">{fresh}</code>
         </div>
       )}
@@ -248,6 +275,7 @@ function McpCard() {
 
 export function Dashboard({ name }: { name: string }) {
   const router = useRouter();
+  const [hasKey, setHasKey] = useState(false);
   return (
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-4xl items-center justify-between px-4 py-5 sm:px-6">
@@ -267,8 +295,8 @@ export function Dashboard({ name }: { name: string }) {
         </div>
       </header>
       <main className="mx-auto max-w-4xl space-y-6 px-4 pb-16 pt-4 sm:px-6">
-        <ConnectionCard />
-        <McpCard />
+        <McpCard hasKey={hasKey} onKey={setHasKey} />
+        <ConnectionCard hasKey={hasKey} />
       </main>
     </div>
   );

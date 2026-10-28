@@ -1,15 +1,19 @@
 import {
+  deleteCommand,
   enqueueCommand,
+  getMessage,
   getMessages,
   getSessionByUserId,
   listChats,
+  loadOpener,
   mediaFiles,
   searchContacts,
   searchMessages,
   waitForCommand,
   type CommandType,
+  type Opener,
 } from "@malote/db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
 import { z } from "zod";
 import { db } from "@/lib/db";
@@ -25,13 +29,18 @@ const text = (value: unknown) => ({
 });
 const fail = (message: string) => ({ content: [{ type: "text" as const, text: message }], isError: true });
 
-/** Loads the caller's WhatsApp session from the verified token. */
+/**
+ * Loads the caller's WhatsApp session and a decryptor built from the private key their token unlocked.
+ * The key only exists in memory for the duration of this request.
+ */
 async function sessionFor(ctx: Ctx) {
-  const userId = ctx.http?.authInfo?.extra?.userId as string | undefined;
+  const extra = ctx.http?.authInfo?.extra;
+  const userId = extra?.userId as string | undefined;
   if (!userId) throw new Error("Não autenticado.");
   const session = await getSessionByUserId(db, userId);
-  if (!session) throw new Error("Nenhum WhatsApp conectado. Conecte em https://malote.fly.dev/app.");
-  return session;
+  if (!session) throw new Error(`Nenhum WhatsApp conectado. Conecte em ${origin()}/app.`);
+  const opener = await loadOpener(db, session, (extra?.privateKey as string | null) ?? null);
+  return Object.assign(session, { opener });
 }
 
 function resolveJid(jid: string, selfJid: string | null) {
@@ -47,6 +56,7 @@ async function runCommand(sessionId: string, type: CommandType, payload: unknown
   const id = await enqueueCommand(db, { sessionId, type, payload, source: "mcp" });
   const done = await waitForCommand(db, id, timeoutMs);
   if (!done) throw new Error("O WhatsApp demorou para responder. Tente de novo.");
+  await deleteCommand(db, id);
   if (done.status === "error") throw new Error(done.error ?? "Falhou.");
   return done.result as Record<string, unknown>;
 }
@@ -61,15 +71,17 @@ function wrap<A>(fn: (args: A, ctx: Ctx) => Promise<ReturnType<typeof text> | Aw
   };
 }
 
-async function downloadResult(result: Record<string, unknown>, origin: string) {
-  const mediaId = result.mediaId as string;
-  const mimetype = result.mimetype as string;
-  const size = result.size as number;
+async function downloadResult(
+  opener: Opener,
+  file: { mediaId: string; mimetype: string; fileName: string | null; size: number },
+  origin: string,
+) {
+  const { mediaId, mimetype, size } = file;
   const content: ({ type: "text"; text: string } | { type: "image"; data: string; mimeType: string })[] = [
     {
       type: "text",
       text: JSON.stringify(
-        { media_id: mediaId, mimetype, file_name: result.fileName ?? null, size, url: `${origin}/api/media/${mediaId}` },
+        { media_id: mediaId, mimetype, file_name: file.fileName, size, url: `${origin}/api/media/${mediaId}` },
         null,
         2,
       ),
@@ -77,8 +89,8 @@ async function downloadResult(result: Record<string, unknown>, origin: string) {
   ];
   // Small images are returned inline so the model can see them.
   if (/^image\/(jpeg|png|gif|webp)$/.test(mimetype) && size < 3_000_000) {
-    const [file] = await db.select({ data: mediaFiles.data }).from(mediaFiles).where(eq(mediaFiles.id, mediaId));
-    if (file) content.push({ type: "image", data: file.data.toString("base64"), mimeType: mimetype });
+    const [row] = await db.select({ data: mediaFiles.data, epochId: mediaFiles.epochId }).from(mediaFiles).where(eq(mediaFiles.id, mediaId));
+    if (row) content.push({ type: "image", data: opener.openBytes(row.data, row.epochId).toString("base64"), mimeType: mimetype });
   }
   return { content };
 }
@@ -112,7 +124,7 @@ const handler = createMcpHandler(
       },
       wrap(async ({ query, limit }: { query?: string; limit?: number }, ctx) => {
         const s = await sessionFor(ctx);
-        return text(await listChats(db, s.id, { query, limit }));
+        return text(await listChats(db, s.opener, s.id, { query, limit }));
       }),
     );
 
@@ -130,7 +142,7 @@ const handler = createMcpHandler(
       },
       wrap(async ({ chat_jid, limit, before }: { chat_jid: string; limit?: number; before?: string }, ctx) => {
         const s = await sessionFor(ctx);
-        return text(await getMessages(db, s.id, { chatJid: resolveJid(chat_jid, s.waJid), limit, before }));
+        return text(await getMessages(db, s.opener, s.id, { chatJid: resolveJid(chat_jid, s.waJid), limit, before }));
       }),
     );
 
@@ -138,7 +150,8 @@ const handler = createMcpHandler(
       "search_messages",
       {
         title: "Buscar mensagens",
-        description: "Busca mensagens por texto (em português, ignora acentos/flexões) em todas as conversas ou em uma.",
+        description:
+          'Busca mensagens por texto (ignora maiúsculas e acentos; todas as palavras precisam aparecer; use aspas para frase exata), das mais recentes para as mais antigas. O histórico é cifrado e a busca decifra mensagem a mensagem: se complete=false, repita com until=scanned_until para continuar mais para trás. Filtrar por chat_jid ou since deixa a busca bem mais rápida.',
         inputSchema: z.object({
           query: z.string(),
           chat_jid: z.string().optional(),
@@ -154,16 +167,15 @@ const handler = createMcpHandler(
           ctx,
         ) => {
           const s = await sessionFor(ctx);
-          return text(
-            await searchMessages(db, s.id, {
-              query: a.query,
-              chatJid: a.chat_jid ? resolveJid(a.chat_jid, s.waJid) : undefined,
-              fromMe: a.from_me,
-              since: a.since,
-              until: a.until,
-              limit: a.limit,
-            }),
-          );
+          const r = await searchMessages(db, s.opener, s.id, {
+            query: a.query,
+            chatJid: a.chat_jid ? resolveJid(a.chat_jid, s.waJid) : undefined,
+            fromMe: a.from_me,
+            since: a.since,
+            until: a.until,
+            limit: a.limit,
+          });
+          return text({ messages: r.messages, complete: r.complete, scanned_until: r.scannedUntil });
         },
       ),
     );
@@ -177,7 +189,7 @@ const handler = createMcpHandler(
       },
       wrap(async ({ query }: { query: string }, ctx) => {
         const s = await sessionFor(ctx);
-        return text(await searchContacts(db, s.id, { query }));
+        return text(await searchContacts(db, s.opener, s.id, { query }));
       }),
     );
 
@@ -195,10 +207,12 @@ const handler = createMcpHandler(
       },
       wrap(async (a: { chat_jid: string; text: string; reply_to_message_id?: string }, ctx) => {
         const s = await sessionFor(ctx);
+        const chatJid = resolveJid(a.chat_jid, s.waJid);
+        const q = a.reply_to_message_id ? await getMessage(db, s.opener, s.id, chatJid, a.reply_to_message_id) : null;
         const result = await runCommand(s.id, "send_text", {
-          chatJid: resolveJid(a.chat_jid, s.waJid),
+          chatJid,
           text: a.text,
-          replyToId: a.reply_to_message_id,
+          quoted: q ? { id: q.id, fromMe: q.fromMe, senderJid: q.senderJid, text: q.text, raw: q.raw } : undefined,
         });
         return text({ sent: true, ...result });
       }),
@@ -226,12 +240,25 @@ const handler = createMcpHandler(
         ) => {
           if (!a.media_id && !a.base64) throw new Error("Informe media_id ou base64.");
           const s = await sessionFor(ctx);
+          let file = { base64: a.base64 ?? "", mimetype: a.mimetype ?? "application/octet-stream", fileName: a.file_name };
+          if (a.media_id) {
+            // Stored media is encrypted; decrypt it here so the worker can re-send it.
+            const [row] = await db
+              .select()
+              .from(mediaFiles)
+              .where(and(eq(mediaFiles.id, a.media_id), eq(mediaFiles.sessionId, s.id)))
+              .limit(1);
+            if (!row) throw new Error("media_id não encontrado.");
+            const msg = row.chatJid && row.messageId ? await getMessage(db, s.opener, s.id, row.chatJid, row.messageId) : null;
+            file = {
+              base64: s.opener.openBytes(row.data, row.epochId).toString("base64"),
+              mimetype: row.mimetype,
+              fileName: a.file_name ?? msg?.media?.fileName,
+            };
+          }
           const result = await runCommand(s.id, "send_file", {
             chatJid: resolveJid(a.chat_jid, s.waJid),
-            mediaId: a.media_id,
-            base64: a.base64,
-            mimetype: a.mimetype,
-            fileName: a.file_name,
+            ...file,
             caption: a.caption,
           });
           return text({ sent: true, ...result });
@@ -249,11 +276,23 @@ const handler = createMcpHandler(
       },
       wrap(async ({ chat_jid, message_id }: { chat_jid: string; message_id: string }, ctx) => {
         const s = await sessionFor(ctx);
+        const chatJid = resolveJid(chat_jid, s.waJid);
+        const msg = await getMessage(db, s.opener, s.id, chatJid, message_id);
+        if (!msg) throw new Error("Mensagem não encontrada.");
+        if (!msg.raw) throw new Error("Essa mensagem não tem mídia.");
+        const mimetype = msg.media?.mimetype?.split(";")[0] ?? "application/octet-stream";
         const result = await runCommand(s.id, "download_media", {
-          chatJid: resolveJid(chat_jid, s.waJid),
+          chatJid,
           messageId: message_id,
+          raw: msg.raw,
+          mimetype,
+          size: msg.media?.size ?? 0,
         });
-        return downloadResult(result, origin());
+        return downloadResult(
+          s.opener,
+          { mediaId: result.mediaId as string, mimetype, fileName: msg.media?.fileName ?? null, size: result.size as number },
+          origin(),
+        );
       }),
     );
   },
@@ -266,7 +305,12 @@ const authed = withMcpAuth(
     if (!bearer) return undefined;
     const row = await verifyToken(bearer);
     if (!row) return undefined;
-    return { token: bearer, clientId: `token:${row.id}`, scopes: ["whatsapp"], extra: { userId: row.userId } };
+    return {
+      token: bearer,
+      clientId: `token:${row.id}`,
+      scopes: ["whatsapp"],
+      extra: { userId: row.userId, privateKey: row.privateKey },
+    };
   },
   { required: true },
 );

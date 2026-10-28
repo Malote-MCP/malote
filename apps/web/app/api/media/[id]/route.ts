@@ -1,18 +1,17 @@
-import { getSessionByUserId, mediaFiles } from "@malote/db";
+import { getSessionByUserId, loadOpener, mediaFiles } from "@malote/db";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { currentUser } from "@/lib/session";
 import { verifyToken } from "@/lib/tokens";
 
 export const dynamic = "force-dynamic";
 
-/** Serves a downloaded media file to its owner (browser session or MCP bearer token). */
+/** Serves a downloaded media file to its owner. Needs the MCP token: it is what decrypts the file. */
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const bearer = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  const userId = bearer ? (await verifyToken(bearer))?.userId : (await currentUser())?.id;
-  if (!userId) return Response.json({ error: "Unauthorized" }, { status: 401 });
-  const session = await getSessionByUserId(db, userId);
+  const auth = bearer ? await verifyToken(bearer) : null;
+  if (!auth) return Response.json({ error: "Unauthorized" }, { status: 401 });
+  const session = await getSessionByUserId(db, auth.userId);
   if (!session || !/^[0-9a-f-]{36}$/.test(id)) return Response.json({ error: "Not found" }, { status: 404 });
   const [file] = await db
     .select()
@@ -20,13 +19,14 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     .where(and(eq(mediaFiles.id, id), eq(mediaFiles.sessionId, session.id)))
     .limit(1);
   if (!file) return Response.json({ error: "Not found" }, { status: 404 });
-  const name = encodeURIComponent(file.fileName ?? `malote-${file.id}`);
-  return new Response(new Uint8Array(file.data), {
+  const opener = await loadOpener(db, session, auth.privateKey);
+  const data = opener.openBytes(file.data, file.epochId);
+  return new Response(new Uint8Array(data), {
     headers: {
       "content-type": file.mimetype,
-      "content-length": String(file.size),
-      "content-disposition": `inline; filename*=UTF-8''${name}`,
-      "cache-control": "private, max-age=3600",
+      "content-length": String(data.length),
+      "content-disposition": `inline; filename="malote-${file.id}"`,
+      "cache-control": "private, no-store",
     },
   });
 }

@@ -17,6 +17,9 @@ RUN NEON_AUTH_BASE_URL=https://build.invalid/auth \
 
 FROM node:22-slim
 WORKDIR /app
+# Commit this image was built from (set by CI), published on /api/transparency.
+ARG GIT_SHA
+ENV GIT_SHA=$GIT_SHA
 ENV NODE_ENV=production PORT=8080 HOSTNAME=0.0.0.0
 COPY --from=build /repo/apps/web/.next/standalone ./
 COPY --from=build /repo/apps/web/.next/static ./apps/web/.next/static

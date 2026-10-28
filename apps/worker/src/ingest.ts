@@ -1,4 +1,4 @@
-import { chats, contacts, messages, type Db } from "@malote/db";
+import { chats, contacts, messages, type Db, type MediaInfo, type Sealer } from "@malote/db";
 import {
   BufferJSON,
   getContentType,
@@ -14,7 +14,12 @@ import {
 } from "baileys";
 import { and, eq, sql } from "drizzle-orm";
 
-type MessageRow = typeof messages.$inferInsert;
+/** A parsed message in plaintext; sealed right before it is written. */
+type MessageRow = Omit<typeof messages.$inferInsert, "media" | "raw"> & { media: MediaInfo | null; raw: string | null };
+
+function sealRow(s: Sealer, r: MessageRow): typeof messages.$inferInsert {
+  return { ...r, senderName: s.seal(r.senderName), text: s.seal(r.text), media: s.sealJson(r.media), raw: s.seal(r.raw) };
+}
 
 /** Prefer the phone-number JID over the LID so a conversation keeps one id. */
 export function chatJidOf(key: WAMessageKey) {
@@ -147,7 +152,7 @@ export function parseMessage(sessionId: string, msg: WAMessage): ParsedMessage {
       quotedId: contextInfo?.stanzaId ?? null,
       media,
       // Only media messages need the raw payload (for later download).
-      raw: media ? JSON.parse(JSON.stringify(msg, BufferJSON.replacer)) : null,
+      raw: media ? JSON.stringify(msg, BufferJSON.replacer) : null,
     },
   };
 }
@@ -173,7 +178,9 @@ export function textOf(m: proto.IMessage | undefined | null): string | null {
 
 const CHUNK = 500;
 
-export async function storeMessages(db: Db, sessionId: string, msgs: WAMessage[]) {
+/** Every write of content goes through a Sealer; without one (no user key yet) nothing is stored. */
+export async function storeMessages(db: Db, sessionId: string, msgs: WAMessage[], s: Sealer | null) {
+  if (!s) return [];
   const rows: MessageRow[] = [];
   const edits: Extract<ParsedMessage, { kind: "edit" }>[] = [];
   const revokes: Extract<ParsedMessage, { kind: "revoke" }>[] = [];
@@ -185,7 +192,10 @@ export async function storeMessages(db: Db, sessionId: string, msgs: WAMessage[]
   }
 
   for (let i = 0; i < rows.length; i += CHUNK) {
-    await db.insert(messages).values(rows.slice(i, i + CHUNK)).onConflictDoNothing();
+    await db
+      .insert(messages)
+      .values(rows.slice(i, i + CHUNK).map((r) => sealRow(s, r)))
+      .onConflictDoNothing();
   }
 
   // Bump chats' last activity and create chats we haven't seen yet.
@@ -200,7 +210,7 @@ export async function storeMessages(db: Db, sessionId: string, msgs: WAMessage[]
     isGroup: !!isJidGroup(jid),
     lastMessageAt: ts,
     // For 1:1 chats, use the other person's push name as a fallback chat name.
-    name: isJidGroup(jid) ? null : (rows.find((r) => r.chatJid === jid && !r.fromMe && r.senderName)?.senderName ?? null),
+    name: isJidGroup(jid) ? null : s.seal(rows.find((r) => r.chatJid === jid && !r.fromMe && r.senderName)?.senderName),
   }));
   if (chatRows.length) {
     await db
@@ -221,14 +231,14 @@ export async function storeMessages(db: Db, sessionId: string, msgs: WAMessage[]
   if (senders.size) {
     await db
       .insert(contacts)
-      .values([...senders].map(([jid, notify]) => ({ sessionId, jid, notify, phone: phoneOf(jid) })))
+      .values([...senders].map(([jid, notify]) => ({ sessionId, jid, notify: s.seal(notify), phone: phoneOf(jid) })))
       .onConflictDoUpdate({ target: [contacts.sessionId, contacts.jid], set: { notify: sql`excluded.notify` } });
   }
 
   for (const e of edits) {
     await db
       .update(messages)
-      .set({ text: e.text, edited: true })
+      .set({ text: s.seal(e.text), edited: true })
       .where(and(eq(messages.sessionId, sessionId), eq(messages.chatJid, e.chatJid), eq(messages.id, e.id)));
   }
   for (const r of revokes) {
@@ -244,13 +254,14 @@ function phoneOf(jid: string) {
   return jid.endsWith("@s.whatsapp.net") ? jid.split("@")[0].split(":")[0] : null;
 }
 
-export async function storeChats(db: Db, sessionId: string, list: (Chat | Partial<Chat>)[]) {
+export async function storeChats(db: Db, sessionId: string, list: (Chat | Partial<Chat>)[], s: Sealer | null) {
+  if (!s) return;
   const rows = list
     .filter((c) => c.id && !isIgnoredJid(c.id))
     .map((c) => ({
       sessionId,
       jid: isJidGroup(c.id!) ? c.id! : jidNormalizedUser(c.id!),
-      name: c.name ?? null,
+      name: s.seal(c.name),
       isGroup: !!isJidGroup(c.id!),
       archived: !!c.archived,
       lastMessageAt: c.conversationTimestamp ? new Date(Number(c.conversationTimestamp) * 1000) : null,
@@ -270,7 +281,8 @@ export async function storeChats(db: Db, sessionId: string, list: (Chat | Partia
   }
 }
 
-export async function storeContacts(db: Db, sessionId: string, list: Partial<Contact>[]) {
+export async function storeContacts(db: Db, sessionId: string, list: Partial<Contact>[], s: Sealer | null) {
+  if (!s) return;
   const rows = list
     .filter((c) => c.id)
     .map((c) => {
@@ -281,8 +293,8 @@ export async function storeContacts(db: Db, sessionId: string, list: Partial<Con
         jid,
         lid: c.lid ?? (isLidUser(c.id!) ? c.id! : null),
         phone: pn ? phoneOf(jidNormalizedUser(pn)) : null,
-        name: c.name ?? null,
-        notify: c.notify ?? c.verifiedName ?? null,
+        name: s.seal(c.name),
+        notify: s.seal(c.notify ?? c.verifiedName),
       };
     });
   for (let i = 0; i < rows.length; i += CHUNK) {
@@ -301,9 +313,11 @@ export async function storeContacts(db: Db, sessionId: string, list: Partial<Con
   }
 }
 
-export async function setChatName(db: Db, sessionId: string, jid: string, name: string) {
+export async function setChatName(db: Db, sessionId: string, jid: string, name: string, s: Sealer | null) {
+  if (!s) return;
+  const sealed = s.seal(name);
   await db
     .insert(chats)
-    .values({ sessionId, jid, name, isGroup: !!isJidGroup(jid) })
-    .onConflictDoUpdate({ target: [chats.sessionId, chats.jid], set: { name } });
+    .values({ sessionId, jid, name: sealed, isGroup: !!isJidGroup(jid) })
+    .onConflictDoUpdate({ target: [chats.sessionId, chats.jid], set: { name: sealed } });
 }

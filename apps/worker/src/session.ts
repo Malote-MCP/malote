@@ -1,4 +1,15 @@
-import { getChat, getMessage, mediaFiles, waSessions, type Db, type SendFilePayload } from "@malote/db";
+import {
+  encEpochs,
+  getChat,
+  mediaFiles,
+  newEpoch,
+  Sealer,
+  waSessions,
+  type Db,
+  type DownloadMediaPayload,
+  type QuotedPayload,
+  type SendFilePayload,
+} from "@malote/db";
 import makeWASocket, {
   Browsers,
   BufferJSON,
@@ -21,6 +32,8 @@ import { checkSendAllowed, recordSend } from "./policy.ts";
 type Boom = Error & { output?: { statusCode?: number } };
 
 const MAX_MEDIA_BYTES = 25 * 1024 * 1024;
+// A new encryption epoch (ephemeral key) at least this often.
+const EPOCH_MAX_AGE_MS = 24 * 3600_000;
 
 let versionPromise: ReturnType<typeof fetchLatestBaileysVersion> | null = null;
 function waVersion() {
@@ -41,6 +54,7 @@ export class SessionRunner {
   private reconnectTimer: NodeJS.Timeout | null = null;
   private recentSent = new Map<string, WAMessage>();
   private namedGroups = new Set<string>();
+  private sealerCache: Sealer | null = null;
   private log: Logger;
 
   constructor(
@@ -62,6 +76,26 @@ export class SessionRunner {
       .update(waSessions)
       .set({ ...values, updatedAt: new Date() })
       .where(eq(waSessions.id, this.session.id));
+  }
+
+  /** Encrypts to the user's public key; null until the user has created a key (then nothing is stored). */
+  async sealer() {
+    const publicKey = this.session.publicKey;
+    if (!publicKey) return null;
+    if (this.sealerCache && Date.now() - this.sealerCache.createdAt < EPOCH_MAX_AGE_MS) return this.sealerCache;
+    const { epk, key } = newEpoch(publicKey);
+    const [epoch] = await this.db.insert(encEpochs).values({ sessionId: this.id, epk }).returning({ id: encEpochs.id });
+    this.sealerCache = new Sealer(epoch.id, key);
+    return this.sealerCache;
+  }
+
+  /** The user created or reset their key: reload it and start a new epoch. */
+  async rekey() {
+    const [row] = await this.db.select().from(waSessions).where(eq(waSessions.id, this.id)).limit(1);
+    if (row) this.session.publicKey = row.publicKey;
+    this.sealerCache = null;
+    this.namedGroups.clear();
+    return this.sealer();
   }
 
   async start() {
@@ -118,28 +152,33 @@ export class SessionRunner {
 
     sock.ev.on("messaging-history.set", async ({ chats, contacts, messages }) => {
       try {
-        await storeChats(this.db, this.id, chats);
-        await storeContacts(this.db, this.id, contacts);
-        await storeMessages(this.db, this.id, messages);
+        const s = await this.sealer();
+        await storeChats(this.db, this.id, chats, s);
+        await storeContacts(this.db, this.id, contacts, s);
+        await storeMessages(this.db, this.id, messages, s);
         this.log.info({ chats: chats.length, contacts: contacts.length, messages: messages.length }, "history sync chunk");
       } catch (e) {
         this.log.error(e, "history sync store failed");
       }
     });
-    sock.ev.on("chats.upsert", (c) => void storeChats(this.db, this.id, c).catch((e) => this.log.error(e)));
-    sock.ev.on("chats.update", (c) => void storeChats(this.db, this.id, c).catch((e) => this.log.error(e)));
-    sock.ev.on("contacts.upsert", (c) => void storeContacts(this.db, this.id, c).catch((e) => this.log.error(e)));
-    sock.ev.on("contacts.update", (c) => void storeContacts(this.db, this.id, c).catch((e) => this.log.error(e)));
+    const withSealer = (fn: (s: Sealer | null) => Promise<unknown>) =>
+      void this.sealer()
+        .then(fn)
+        .catch((e) => this.log.error(e));
+    sock.ev.on("chats.upsert", (c) => withSealer((s) => storeChats(this.db, this.id, c, s)));
+    sock.ev.on("chats.update", (c) => withSealer((s) => storeChats(this.db, this.id, c, s)));
+    sock.ev.on("contacts.upsert", (c) => withSealer((s) => storeContacts(this.db, this.id, c, s)));
+    sock.ev.on("contacts.update", (c) => withSealer((s) => storeContacts(this.db, this.id, c, s)));
     sock.ev.on("groups.upsert", (groups) => {
-      for (const g of groups) if (g.subject) void setChatName(this.db, this.id, g.id, g.subject).catch(() => {});
+      for (const g of groups) if (g.subject) withSealer((s) => setChatName(this.db, this.id, g.id, g.subject, s));
     });
     sock.ev.on("groups.update", (groups) => {
-      for (const g of groups) if (g.id && g.subject) void setChatName(this.db, this.id, g.id, g.subject).catch(() => {});
+      for (const g of groups) if (g.id && g.subject) withSealer((s) => setChatName(this.db, this.id, g.id!, g.subject!, s));
     });
 
     sock.ev.on("messages.upsert", async ({ messages }) => {
       try {
-        const rows = await storeMessages(this.db, this.id, messages);
+        const rows = await storeMessages(this.db, this.id, messages, await this.sealer());
         for (const r of rows) if (r.chatJid && isJidGroup(r.chatJid)) void this.ensureGroupName(r.chatJid);
       } catch (e) {
         this.log.error(e, "messages.upsert store failed");
@@ -149,12 +188,17 @@ export class SessionRunner {
       // Edits arrive as protocol messages via upsert; here we only care about deletions for everyone.
       for (const u of updates) {
         if (u.update.message === null && u.key.id && u.key.remoteJid) {
-          await storeMessages(this.db, this.id, [
-            {
-              key: { remoteJid: u.key.remoteJid, fromMe: u.key.fromMe, id: `revoke-${u.key.id}` },
-              message: { protocolMessage: { type: 0, key: u.key } },
-            } as WAMessage,
-          ]).catch(() => {});
+          await storeMessages(
+            this.db,
+            this.id,
+            [
+              {
+                key: { remoteJid: u.key.remoteJid, fromMe: u.key.fromMe, id: `revoke-${u.key.id}` },
+                message: { protocolMessage: { type: 0, key: u.key } },
+              } as WAMessage,
+            ],
+            await this.sealer(),
+          ).catch(() => {});
         }
       }
     });
@@ -167,7 +211,7 @@ export class SessionRunner {
     if (chat?.name) return;
     try {
       const meta = await this.sock.groupMetadata(jid);
-      if (meta.subject) await setChatName(this.db, this.id, jid, meta.subject);
+      if (meta.subject) await setChatName(this.db, this.id, jid, meta.subject, await this.sealer());
     } catch (e) {
       this.log.debug(e, "groupMetadata failed");
     }
@@ -274,47 +318,27 @@ export class SessionRunner {
     if (sent?.key.id) {
       this.recentSent.set(sent.key.id, sent);
       if (this.recentSent.size > 500) this.recentSent.delete(this.recentSent.keys().next().value!);
-      await storeMessages(this.db, this.id, [sent]).catch(() => {});
+      await storeMessages(this.db, this.id, [sent], await this.sealer()).catch(() => {});
     }
     return { messageId: sent?.key.id ?? null, chatJid };
   }
 
-  async sendText(jid: string, text: string, opts: { replyToId?: string } = {}) {
-    let quoted: WAMessage | undefined;
-    if (opts.replyToId) {
-      const chatJid = this.resolveJid(jid);
-      const row = await getMessage(this.db, this.id, chatJid, opts.replyToId);
-      if (row) {
-        quoted = row.raw
-          ? (JSON.parse(JSON.stringify(row.raw), BufferJSON.reviver) as WAMessage)
-          : ({
-              key: { remoteJid: chatJid, id: row.id, fromMe: row.fromMe, participant: row.senderJid ?? undefined },
-              message: { conversation: row.text ?? "" },
-            } as WAMessage);
-      }
-    }
+  async sendText(jid: string, text: string, opts: { quoted?: QuotedPayload } = {}) {
+    const q = opts.quoted;
+    const quoted = !q
+      ? undefined
+      : q.raw
+        ? (JSON.parse(q.raw, BufferJSON.reviver) as WAMessage)
+        : ({
+            key: { remoteJid: this.resolveJid(jid), id: q.id, fromMe: q.fromMe, participant: q.senderJid ?? undefined },
+            message: { conversation: q.text ?? "" },
+          } as WAMessage);
     return this.deliver(jid, { text }, { quoted });
   }
 
   async sendFile(payload: SendFilePayload) {
-    let data: Buffer;
-    let mimetype = payload.mimetype ?? "application/octet-stream";
-    let fileName = payload.fileName;
-    if (payload.mediaId) {
-      const [file] = await this.db
-        .select()
-        .from(mediaFiles)
-        .where(and(eq(mediaFiles.id, payload.mediaId), eq(mediaFiles.sessionId, this.id)))
-        .limit(1);
-      if (!file) throw new Error("media_id não encontrado.");
-      data = file.data;
-      mimetype = file.mimetype;
-      fileName ??= file.fileName ?? undefined;
-    } else if (payload.base64) {
-      data = Buffer.from(payload.base64, "base64");
-    } else {
-      throw new Error("Informe media_id ou base64.");
-    }
+    const data = Buffer.from(payload.base64, "base64");
+    const { mimetype, fileName } = payload;
     if (data.length > MAX_MEDIA_BYTES) throw new Error("Arquivo maior que 25 MB.");
 
     const caption = payload.caption;
@@ -326,29 +350,36 @@ export class SessionRunner {
     return this.deliver(payload.chatJid, content);
   }
 
-  async downloadMedia(chatJid: string, messageId: string) {
+  /** Downloads a message's media (the web app passes the decrypted message) and stores it encrypted. */
+  async downloadMedia(p: DownloadMediaPayload) {
     const sock = this.requireSock();
-    const jid = this.resolveJid(chatJid);
+    const jid = this.resolveJid(p.chatJid);
     const [cached] = await this.db
-      .select({ id: mediaFiles.id, mimetype: mediaFiles.mimetype, fileName: mediaFiles.fileName, size: mediaFiles.size })
+      .select({ id: mediaFiles.id, size: mediaFiles.size })
       .from(mediaFiles)
-      .where(and(eq(mediaFiles.sessionId, this.id), eq(mediaFiles.chatJid, jid), eq(mediaFiles.messageId, messageId)))
+      .where(and(eq(mediaFiles.sessionId, this.id), eq(mediaFiles.chatJid, jid), eq(mediaFiles.messageId, p.messageId)))
       .limit(1);
-    if (cached) return { mediaId: cached.id, mimetype: cached.mimetype, fileName: cached.fileName, size: cached.size };
+    if (cached) return { mediaId: cached.id, size: cached.size };
 
-    const row = await getMessage(this.db, this.id, jid, messageId);
-    if (!row) throw new Error("Mensagem não encontrada.");
-    if (!row.raw) throw new Error("Essa mensagem não tem mídia.");
-    if ((row.media?.size ?? 0) > MAX_MEDIA_BYTES) throw new Error("Mídia maior que 25 MB.");
-    const msg = JSON.parse(JSON.stringify(row.raw), BufferJSON.reviver) as WAMessage;
+    const s = await this.sealer();
+    if (!s) throw new Error("Crie seu token no painel antes de baixar mídias.");
+    if (p.size > MAX_MEDIA_BYTES) throw new Error("Mídia maior que 25 MB.");
+    const msg = JSON.parse(p.raw, BufferJSON.reviver) as WAMessage;
     const data = await downloadMediaMessage(msg, "buffer", {}, { logger: this.log as never, reuploadRequest: sock.updateMediaMessage });
     if (data.length > MAX_MEDIA_BYTES) throw new Error("Mídia maior que 25 MB.");
-    const mimetype = row.media?.mimetype?.split(";")[0] ?? "application/octet-stream";
     const [file] = await this.db
       .insert(mediaFiles)
-      .values({ sessionId: this.id, chatJid: jid, messageId, mimetype, fileName: row.media?.fileName ?? null, size: data.length, data })
+      .values({
+        sessionId: this.id,
+        chatJid: jid,
+        messageId: p.messageId,
+        mimetype: p.mimetype,
+        size: data.length,
+        data: s.sealBytes(data),
+        epochId: s.epochId,
+      })
       .returning({ id: mediaFiles.id });
-    return { mediaId: file.id, mimetype, fileName: row.media?.fileName ?? null, size: data.length };
+    return { mediaId: file.id, size: data.length };
   }
 
   chatJidOf = chatJidOf;

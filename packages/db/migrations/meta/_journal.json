@@ -15,6 +15,13 @@
       "when": 1793166238330,
       "tag": "0001_commands_notify",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793227233693,
+      "tag": "0002_encryption",
+      "breakpoints": true
     }
   ]
 }

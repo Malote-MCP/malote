@@ -4,6 +4,7 @@ import {
   createDb,
   createPool,
   waSessions,
+  workers,
   type DownloadMediaPayload,
   type SendFilePayload,
   type SendTextPayload,
@@ -12,6 +13,7 @@ import { eq, sql } from "drizzle-orm";
 import pg from "pg";
 import pino from "pino";
 import { env } from "./env.ts";
+import { encryptLegacy } from "./legacy.ts";
 import { PolicyError } from "./policy.ts";
 import { SessionRunner } from "./session.ts";
 
@@ -35,6 +37,25 @@ async function detectEgressIp() {
 const egressIp = await detectEgressIp();
 log.info({ egressIp, workerId: env.workerId }, "worker starting");
 
+// Publish which image this worker runs (shown on /api/transparency).
+const startedAt = new Date();
+async function reportWorker() {
+  const values = { imageRef: process.env.FLY_IMAGE_REF ?? null, gitSha: process.env.GIT_SHA ?? null, seenAt: new Date() };
+  await db
+    .insert(workers)
+    .values({ id: env.workerId, startedAt, ...values })
+    .onConflictDoUpdate({ target: workers.id, set: { startedAt, ...values } });
+}
+await reportWorker().catch((e) => log.warn(e, "worker report failed"));
+
+/** Encrypts any plaintext left from before the user had a key. */
+async function migrateLegacy(runner: SessionRunner) {
+  const s = await runner.sealer();
+  if (!s) return;
+  const n = await encryptLegacy(pool, runner.id, s);
+  if (n) log.info({ session: runner.id, rows: n }, "encrypted legacy rows");
+}
+
 async function startSession(sessionId: string) {
   const existing = runners.get(sessionId);
   if (existing && existing.status !== "stopped") return existing;
@@ -43,6 +64,7 @@ async function startSession(sessionId: string) {
   const runner = new SessionRunner(db, session, log, egressIp);
   runners.set(sessionId, runner);
   await runner.start();
+  void migrateLegacy(runner).catch((e) => log.error(e, "legacy encryption failed"));
   return runner;
 }
 
@@ -80,16 +102,22 @@ async function execute(cmd: CommandRow): Promise<unknown> {
       }
       return { ok: true };
     }
+    case "rekey": {
+      const runner = runners.get(cmd.sessionId);
+      if (runner) {
+        await runner.rekey();
+        void migrateLegacy(runner).catch((e) => log.error(e, "legacy encryption failed"));
+      }
+      return { ok: true };
+    }
     case "send_text": {
       const p = cmd.payload as SendTextPayload;
-      return connectedRunner(cmd.sessionId).sendText(p.chatJid, p.text, { replyToId: p.replyToId });
+      return connectedRunner(cmd.sessionId).sendText(p.chatJid, p.text, { quoted: p.quoted });
     }
     case "send_file":
       return connectedRunner(cmd.sessionId).sendFile(cmd.payload as SendFilePayload);
-    case "download_media": {
-      const p = cmd.payload as DownloadMediaPayload;
-      return connectedRunner(cmd.sessionId).downloadMedia(p.chatJid, p.messageId);
-    }
+    case "download_media":
+      return connectedRunner(cmd.sessionId).downloadMedia(cmd.payload as DownloadMediaPayload);
     default:
       throw new Error(`Comando desconhecido: ${cmd.type}`);
   }
@@ -109,8 +137,10 @@ async function drain() {
     do {
       drainAgain = false;
       await db.execute(sql`
-        update commands set status = 'error', error = 'Comando expirou antes de ser executado.', finished_at = now()
+        update commands set status = 'error', error = 'Comando expirou antes de ser executado.', payload = '{}', finished_at = now()
         where status = 'pending' and created_at < now() - make_interval(secs => ${COMMAND_TTL_MS / 1000})`);
+      // Results are read (and deleted) by the web app right away; drop whatever is left.
+      await db.execute(sql`delete from commands where finished_at < now() - interval '5 minutes'`);
       const { rows } = await pool.query<{ id: number }>(`
         update commands set status = 'running'
         where id in (select id from commands where status = 'pending' order by id limit 20 for update skip locked)
@@ -119,11 +149,17 @@ async function drain() {
         const [cmd] = await db.select().from(commands).where(eq(commands.id, id));
         void execute(cmd)
           .then((result) =>
-            db.update(commands).set({ status: "done", result: result ?? {}, finishedAt: new Date() }).where(eq(commands.id, id)),
+            db
+              .update(commands)
+              .set({ status: "done", payload: {}, result: result ?? {}, finishedAt: new Date() })
+              .where(eq(commands.id, id)),
           )
           .catch((e: Error) => {
             if (!(e instanceof PolicyError)) log.warn({ err: e, cmd: cmd.type }, "command failed");
-            return db.update(commands).set({ status: "error", error: e.message, finishedAt: new Date() }).where(eq(commands.id, id));
+            return db
+              .update(commands)
+              .set({ status: "error", payload: {}, error: e.message, finishedAt: new Date() })
+              .where(eq(commands.id, id));
           });
       }
       if (rows.length === 20) drainAgain = true;
@@ -154,6 +190,7 @@ void drain();
 setInterval(() => void drain(), 5000);
 setInterval(() => {
   for (const r of runners.values()) void r.heartbeat().catch(() => {});
+  void reportWorker().catch(() => {});
 }, 60_000);
 
 for (const [i, s] of enabled.entries()) {

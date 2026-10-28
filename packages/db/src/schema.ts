@@ -1,5 +1,5 @@
-import { sql, type SQL } from "drizzle-orm";
 import {
+  bigint,
   bigserial,
   boolean,
   customType,
@@ -16,10 +16,6 @@ import {
 
 const bytea = customType<{ data: Buffer; driverData: Buffer }>({
   dataType: () => "bytea",
-});
-
-const tsvector = customType<{ data: string }>({
-  dataType: () => "tsvector",
 });
 
 /** One WhatsApp connection per Malote user (Neon Auth user id). */
@@ -40,6 +36,8 @@ export const waSessions = pgTable("wa_sessions", {
   workerId: text("worker_id"),
   lastError: text("last_error"),
   lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
+  // X25519 public key (base64url). Stored content is encrypted to it; see crypto.ts.
+  publicKey: text("public_key"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -64,6 +62,7 @@ export const chats = pgTable(
       .notNull()
       .references(() => waSessions.id, { onDelete: "cascade" }),
     jid: text("jid").notNull(),
+    // Encrypted (crypto.ts).
     name: text("name"),
     isGroup: boolean("is_group").notNull().default(false),
     archived: boolean("archived").notNull().default(false),
@@ -84,6 +83,7 @@ export const contacts = pgTable(
     jid: text("jid").notNull(),
     lid: text("lid"),
     phone: text("phone"),
+    // Encrypted (crypto.ts).
     name: text("name"),
     notify: text("notify"),
   },
@@ -99,6 +99,7 @@ export const messages = pgTable(
     chatJid: text("chat_jid").notNull(),
     id: text("id").notNull(),
     senderJid: text("sender_jid"),
+    // Encrypted (crypto.ts): sender_name, text, media, raw.
     senderName: text("sender_name"),
     fromMe: boolean("from_me").notNull().default(false),
     ts: timestamp("ts", { withTimezone: true }).notNull(),
@@ -106,20 +107,17 @@ export const messages = pgTable(
     type: text("type").notNull(),
     text: text("text"),
     quotedId: text("quoted_id"),
-    media: jsonb("media").$type<{ mimetype?: string; fileName?: string; size?: number; seconds?: number }>(),
-    // Full WAMessage (BufferJSON-encoded) so media can be downloaded later.
-    raw: jsonb("raw"),
+    // JSON { mimetype, fileName, size, seconds }.
+    media: text("media"),
+    // Full WAMessage (BufferJSON-encoded JSON) so media can be downloaded later.
+    raw: text("raw"),
     edited: boolean("edited").notNull().default(false),
     revoked: boolean("revoked").notNull().default(false),
-    tsv: tsvector("tsv").generatedAlwaysAs(
-      (): SQL => sql`to_tsvector('portuguese', coalesce(${messages.text}, ''))`,
-    ),
   },
   (t) => [
     primaryKey({ columns: [t.sessionId, t.chatJid, t.id] }),
     index("messages_chat_ts_idx").on(t.sessionId, t.chatJid, t.ts),
     index("messages_session_ts_idx").on(t.sessionId, t.ts),
-    index("messages_tsv_idx").using("gin", t.tsv),
   ],
 );
 
@@ -131,8 +129,9 @@ export const commands = pgTable(
     sessionId: uuid("session_id")
       .notNull()
       .references(() => waSessions.id, { onDelete: "cascade" }),
-    // connect | logout | send_text | send_file | download_media
+    // connect | logout | rekey | send_text | send_file | download_media
     type: text("type").notNull(),
+    // Wiped when the command finishes; finished rows are deleted shortly after.
     payload: jsonb("payload").notNull().default({}),
     // mcp | web
     source: text("source").notNull(),
@@ -156,13 +155,35 @@ export const mediaFiles = pgTable(
     chatJid: text("chat_jid"),
     messageId: text("message_id"),
     mimetype: text("mimetype").notNull(),
+    // Encrypted (crypto.ts).
     fileName: text("file_name"),
     size: integer("size").notNull(),
+    // AES-GCM with the key of epoch `epoch_id`.
     data: bytea("data").notNull(),
+    epochId: bigint("epoch_id", { mode: "number" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("media_files_msg_idx").on(t.sessionId, t.chatJid, t.messageId)],
 );
+
+/** Ephemeral public keys of the worker's encryption epochs (crypto.ts). */
+export const encEpochs = pgTable("enc_epochs", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  sessionId: uuid("session_id")
+    .notNull()
+    .references(() => waSessions.id, { onDelete: "cascade" }),
+  epk: text("epk").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Image each worker process runs, for the public transparency endpoint. */
+export const workers = pgTable("workers", {
+  id: text("id").primaryKey(),
+  imageRef: text("image_ref"),
+  gitSha: text("git_sha"),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull(),
+  seenAt: timestamp("seen_at", { withTimezone: true }).notNull(),
+});
 
 /** Bearer tokens for MCP clients. Only the SHA-256 hash is stored. */
 export const apiTokens = pgTable(
@@ -176,6 +197,8 @@ export const apiTokens = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
     revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    // The user's private key, encrypted with a key derived from this token (crypto.ts).
+    wrappedKey: text("wrapped_key"),
   },
   (t) => [uniqueIndex("api_tokens_hash_idx").on(t.tokenHash), index("api_tokens_user_idx").on(t.userId)],
 );

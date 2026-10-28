@@ -30,6 +30,10 @@ export async function POST(req: Request) {
     return Response.json({ error: "action deve ser connect ou logout" }, { status: 400 });
   }
   const s = await getOrCreateWaSession(user.id);
+  // Without a key the worker would have nowhere safe to store the history sync.
+  if (action === "connect" && !s.publicKey) {
+    return Response.json({ error: "Gere seu token antes de conectar o WhatsApp." }, { status: 409 });
+  }
   await enqueueCommand(db, { sessionId: s.id, type: action, source: "web" });
   return Response.json({ ok: true });
 }

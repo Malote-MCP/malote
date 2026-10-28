@@ -5,19 +5,16 @@ import { commands } from "./schema.ts";
 
 type Db = NodePgDatabase<typeof schema>;
 
-export type CommandType = "connect" | "logout" | "send_text" | "send_file" | "download_media";
+export type CommandType = "connect" | "logout" | "rekey" | "send_text" | "send_file" | "download_media";
 
-export type SendTextPayload = { chatJid: string; text: string; replyToId?: string };
-export type SendFilePayload = {
-  chatJid: string;
-  caption?: string;
-  // Either an already stored media file or inline base64 content.
-  mediaId?: string;
-  base64?: string;
-  mimetype?: string;
-  fileName?: string;
-};
-export type DownloadMediaPayload = { chatJid: string; messageId: string };
+// The worker cannot decrypt stored content, so the web app (holding the user's key during the request)
+// puts whatever plaintext a command needs in its payload. Payloads are wiped when the command finishes.
+
+/** The message being replied to: its raw WAMessage JSON when stored, else a minimal stand-in. */
+export type QuotedPayload = { id: string; fromMe: boolean; senderJid: string | null; text: string | null; raw: string | null };
+export type SendTextPayload = { chatJid: string; text: string; quoted?: QuotedPayload };
+export type SendFilePayload = { chatJid: string; caption?: string; base64: string; mimetype: string; fileName?: string };
+export type DownloadMediaPayload = { chatJid: string; messageId: string; raw: string; mimetype: string; size: number };
 
 /** Inserts a command; a DB trigger fires NOTIFY so the worker picks it up immediately. */
 export async function enqueueCommand(
@@ -29,6 +26,11 @@ export async function enqueueCommand(
     .values({ sessionId: input.sessionId, type: input.type, payload: input.payload ?? {}, source: input.source })
     .returning({ id: commands.id });
   return row.id;
+}
+
+/** Removes a finished command so its result does not linger in the database. */
+export async function deleteCommand(db: Db, id: number) {
+  await db.delete(commands).where(eq(commands.id, id));
 }
 
 /** Polls until the worker finishes the command (or the timeout elapses). */

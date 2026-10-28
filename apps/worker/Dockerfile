@@ -10,5 +10,8 @@ RUN pnpm install --frozen-lockfile --prod --filter "@malote/worker..."
 COPY packages/db packages/db
 COPY apps/worker apps/worker
 WORKDIR /repo/apps/worker
+# Commit this image was built from (set by CI), published on /api/transparency.
+ARG GIT_SHA
+ENV GIT_SHA=$GIT_SHA
 ENV NODE_ENV=production
 CMD ["node", "--import", "tsx", "src/main.ts"]
