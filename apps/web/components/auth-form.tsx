@@ -2,15 +2,27 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth/client";
 import { Logo } from "./logo";
+
+const oauthErrors: Record<string, string> = {
+  state_mismatch: "O login com o Google expirou ou foi aberto duas vezes. Tente de novo numa única aba.",
+  invalid_code: "O Google recusou o login. Tente de novo.",
+  access_denied: "Você cancelou o login com o Google.",
+};
 
 export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<"email" | "google" | null>(null);
   const isSignUp = mode === "sign-up";
+
+  // Neon Auth sends OAuth failures back as ?error=<code>.
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get("error");
+    if (code) setError(oauthErrors[code] ?? `Não foi possível entrar com o Google (${code}). Tente de novo.`);
+  }, []);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -37,6 +49,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
     const { error } = await authClient.signIn.social({
       provider: "google",
       callbackURL: `${window.location.origin}/app`,
+      errorCallbackURL: `${window.location.origin}/auth/sign-in`,
     });
     if (error) {
       setPending(null);
