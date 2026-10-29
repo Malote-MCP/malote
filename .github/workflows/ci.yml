@@ -3,7 +3,6 @@ name: ci
 on:
   pull_request:
   push:
-    branches: [main]
 
 permissions:
   contents: read
@@ -55,4 +54,8 @@ jobs:
           echo "build 1: $a"
           echo "build 2: $b"
           echo "### Worker image digest: \`$a\`" >> "$GITHUB_STEP_SUMMARY"
-          test "$a" = "$b" || { echo "::error::Worker build is not reproducible"; exit 1; }
+          if [ "$a" != "$b" ]; then
+            python3 scripts/diff-oci.py /tmp/worker-1.tar /tmp/worker-2.tar
+            echo "::error::Worker build is not reproducible"
+            exit 1
+          fi
