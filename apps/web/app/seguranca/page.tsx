@@ -2,7 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { repositoryUrl, transparencyUrl } from "@/lib/public-info";
+import { EnclaveStatus } from "@/components/enclave-status";
 import { GitHubStar } from "@/components/github-star";
+
+// The enclave status reads ENCLAVE_URL at request time.
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Segurança, código e transparência — Malote",
@@ -106,6 +110,7 @@ export default function Security() {
             <section id="versao" className="trust-article" aria-labelledby="version-title">
               <p className="site-eyebrow">05 / VERSÃO E PROVENIÊNCIA</p>
               <h2 id="version-title">Veja a versão informada pelos servidores.</h2>
+              <EnclaveStatus enclaveUrl={process.env.ENCLAVE_URL ?? null} env={process.env.ENCLAVE_ENV ?? null} />
               <p>O endpoint público de transparência informa o commit e a referência da imagem do site, além das versões dos processos de WhatsApp que enviaram um sinal de atividade recente. Os componentes podem estar em versões diferentes durante uma atualização. Campos sem configuração podem aparecer como <code>null</code>.</p>
               <a href={transparencyUrl} className="trust-endpoint"><code>GET /api/transparency</code><span>Consultar serviço hospedado <span aria-hidden="true">↗</span></span></a>
               <p>Essas informações são declaradas pela própria infraestrutura. Elas ajudam a acompanhar mudanças, mas não são uma atestação independente do código em execução.</p>

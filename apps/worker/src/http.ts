@@ -188,12 +188,16 @@ export function createEnclaveApi(deps: Deps) {
       return json(res, 405, { error: "Method not allowed" }, headers);
     }
 
-    if (path === "/v1/attestation" && req.method === "GET") {
+    if (path === "/v1/attestation") {
+      // Public proof: any page or auditor may request it from a browser.
+      const open = { "access-control-allow-origin": "*" };
+      if (req.method === "OPTIONS") return void res.writeHead(204, { ...open, "access-control-allow-methods": "GET" }).end();
+      if (req.method !== "GET") return json(res, 405, { error: "Method not allowed" }, open);
       const nonce = url.searchParams.get("nonce") ?? "";
-      if (!/^[A-Za-z0-9_-]{16,64}$/.test(nonce)) return json(res, 400, { error: "nonce: 16–64 caracteres [A-Za-z0-9_-]" });
-      if (!deps.config || !fingerprint) return json(res, 501, { error: "Atestação só existe dentro do enclave." });
+      if (!/^[A-Za-z0-9_-]{16,64}$/.test(nonce)) return json(res, 400, { error: "nonce: 16–64 caracteres [A-Za-z0-9_-]" }, open);
+      if (!deps.config || !fingerprint) return json(res, 501, { error: "Atestação só existe dentro do enclave." }, open);
       const token = await attestationToken(ATTESTATION_AUDIENCE, [nonce, fingerprint]);
-      return json(res, 200, { token, tls_public_key_sha256: fingerprint, audience: ATTESTATION_AUDIENCE });
+      return json(res, 200, { token, tls_public_key_sha256: fingerprint, audience: ATTESTATION_AUDIENCE }, { ...open, "cache-control": "no-store" });
     }
 
     json(res, 404, { error: "Not found" });

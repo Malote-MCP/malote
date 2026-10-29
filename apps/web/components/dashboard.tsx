@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { authClient } from "@/lib/auth/client";
+import { EnclaveStatus } from "./enclave-status";
 import { Logo } from "./logo";
 
 type Status = {
@@ -290,7 +291,15 @@ function McpCard({ hasKey, onKey, enclaveUrl }: { hasKey: boolean; onKey: (v: bo
   );
 }
 
-export function Dashboard({ name, enclaveUrl = null }: { name: string; enclaveUrl?: string | null }) {
+export function Dashboard({
+  name,
+  enclaveUrl = null,
+  enclaveEnv = null,
+}: {
+  name: string;
+  enclaveUrl?: string | null;
+  enclaveEnv?: string | null;
+}) {
   const router = useRouter();
   const [hasKey, setHasKey] = useState(false);
   return (
@@ -312,6 +321,7 @@ export function Dashboard({ name, enclaveUrl = null }: { name: string; enclaveUr
         </div>
       </header>
       <main className="mx-auto max-w-4xl space-y-6 px-4 pb-16 pt-4 sm:px-6">
+        <EnclaveStatus enclaveUrl={enclaveUrl} env={enclaveEnv} />
         <McpCard hasKey={hasKey} onKey={setHasKey} enclaveUrl={enclaveUrl} />
         <ConnectionCard hasKey={hasKey} />
       </main>
