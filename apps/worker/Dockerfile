@@ -2,7 +2,7 @@
 # Reproducible: the same commit must always produce the same image digest (checked in CI).
 # Base pinned by digest; caches and pnpm's timestamped state removed; the builder normalizes file times.
 FROM node:22-slim@sha256:4b150b48b4116e2a22f2c39cc27025fbf4f153e2078fd3b14d159fdb5c7279da
-RUN corepack enable
+RUN corepack enable && rm -rf /tmp/*
 WORKDIR /repo
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/web/package.json apps/web/
@@ -10,7 +10,8 @@ COPY apps/worker/package.json apps/worker/
 COPY packages/db/package.json packages/db/
 RUN pnpm install --frozen-lockfile --prod --filter "@malote/worker..." \
   && find . -name .modules.yaml -delete \
-  && rm -rf /root/.cache /root/.local/share/pnpm /tmp/*
+  && rm -f node_modules/.pnpm-workspace-state*.json \
+  && rm -rf /root/.cache /root/.local/share/pnpm /root/.local/state /tmp/*
 COPY packages/db packages/db
 COPY apps/worker apps/worker
 WORKDIR /repo/apps/worker
