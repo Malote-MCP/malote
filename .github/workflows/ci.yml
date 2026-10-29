@@ -1,0 +1,58 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL_TEST: postgres://postgres:postgres@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+
+  # The worker image is what runs in the enclave, so the same commit must always build to the same
+  # digest: anyone can then rebuild it and compare with what production attests to.
+  reproducible-worker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build twice from scratch and compare digests
+        run: |
+          export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
+          for i in 1 2; do
+            docker buildx build --no-cache \
+              --file apps/worker/Dockerfile \
+              --build-arg GIT_SHA=${{ github.sha }} \
+              --build-arg SOURCE_DATE_EPOCH \
+              --output type=oci,dest=/tmp/worker-$i.tar,rewrite-timestamp=true \
+              --metadata-file /tmp/meta-$i.json .
+          done
+          a=$(jq -r '."containerimage.digest"' /tmp/meta-1.json)
+          b=$(jq -r '."containerimage.digest"' /tmp/meta-2.json)
+          echo "build 1: $a"
+          echo "build 2: $b"
+          echo "### Worker image digest: \`$a\`" >> "$GITHUB_STEP_SUMMARY"
+          test "$a" = "$b" || { echo "::error::Worker build is not reproducible"; exit 1; }

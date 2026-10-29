@@ -8,13 +8,16 @@
   },
   "scripts": {
     "generate": "drizzle-kit generate",
-    "migrate": "node --env-file=../../.env.local --import tsx src/migrate.ts"
+    "migrate": "node --env-file=../../.env.local --import tsx src/migrate.ts",
+    "test": "node --import tsx --test test/*.test.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.4",
     "pg": "^8.23.1"
   },
   "devDependencies": {
+    "@types/node": "^22.20.5",
     "@types/pg": "^8.15.0",
     "drizzle-kit": "^0.31.11",
     "tsx": "^4.23.15",

@@ -29,7 +29,7 @@ export function normalizeText(s: string) {
   return s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 }
 
-function matcher(query: string) {
+export function matcher(query: string) {
   const q = normalizeText(query.trim());
   const phrase = q.match(/^"(.+)"$/)?.[1];
   const terms = phrase ? [phrase] : q.split(/\s+/).filter(Boolean);

@@ -10,5 +10,5 @@
     "allowImportingTsExtensions": true,
     "types": ["node"]
   },
-  "include": ["src", "../../packages/db/src"]
+  "include": ["src", "test", "../../packages/db/src"]
 }

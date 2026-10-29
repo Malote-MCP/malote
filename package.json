@@ -7,7 +7,9 @@
     "dev:worker": "pnpm --filter @malote/worker dev",
     "build": "pnpm --filter @malote/web build && pnpm --filter @malote/worker typecheck",
     "db:generate": "pnpm --filter @malote/db generate",
-    "db:migrate": "pnpm --filter @malote/db migrate"
+    "db:migrate": "pnpm --filter @malote/db migrate",
+    "test": "pnpm -r --if-present test",
+    "typecheck": "pnpm -r --if-present typecheck"
   },
   "dependencies": {
     "@neon/config": "^1.9.5",
