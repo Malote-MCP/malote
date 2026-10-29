@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --env-file=../../.env.local",
+    "dev": "sh -c 'set -a && . ../../.env.local && set +a && exec next dev'",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit"

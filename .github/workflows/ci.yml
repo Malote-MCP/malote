@@ -31,8 +31,8 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
 
-  # The worker image is what runs in the enclave, so the same commit must always build to the same
-  # digest: anyone can then rebuild it and compare with what production attests to.
+  # The worker image handles plaintext messages, so the same commit must always build to the same
+  # digest: anyone can rebuild it and compare with the digest the deploy reports.
   reproducible-worker:
     runs-on: ubuntu-latest
     steps:

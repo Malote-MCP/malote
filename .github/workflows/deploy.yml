@@ -51,20 +51,28 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - id: image
         run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}/${{ matrix.app }}" >> "$GITHUB_OUTPUT"
+      - id: epoch
+        run: echo "value=$(git log -1 --format=%ct)" >> "$GITHUB_OUTPUT"
+      # Same settings as the reproducible-build check in ci.yml, so the deployed digest is the checked one.
       - id: build
         uses: docker/build-push-action@v6
+        env:
+          SOURCE_DATE_EPOCH: ${{ steps.epoch.outputs.value }}
         with:
           context: .
           file: apps/${{ matrix.app }}/Dockerfile
           push: true
           tags: ${{ steps.image.outputs.name }}:${{ github.sha }}
-          build-args: GIT_SHA=${{ github.sha }}
+          outputs: type=image,push=true,rewrite-timestamp=true
+          build-args: |
+            GIT_SHA=${{ github.sha }}
+            SOURCE_DATE_EPOCH=${{ steps.epoch.outputs.value }}
       - uses: actions/attest-build-provenance@v2
         with:
           subject-name: ${{ steps.image.outputs.name }}
           subject-digest: ${{ steps.build.outputs.digest }}
           push-to-registry: true
-      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - uses: superfly/flyctl-actions/setup-flyctl@1.6
       - run: flyctl deploy --config fly.${{ matrix.app }}.toml --image ${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}

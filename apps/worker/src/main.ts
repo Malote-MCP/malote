@@ -22,8 +22,9 @@ const pool = createPool(env.databaseUrl, 10);
 const db = createDb(pool);
 const runners = new Map<string, SessionRunner>();
 
-// Commands older than this are expired instead of executed (never send something stale).
-const COMMAND_TTL_MS = 2 * 60_000;
+// Commands older than this are expired instead of executed (never send something stale). Kept well
+// under the web app's 45s wait, so a send the caller was told failed is not delivered later.
+const COMMAND_TTL_MS = 30_000;
 
 async function detectEgressIp() {
   try {
@@ -139,6 +140,10 @@ async function drain() {
       await db.execute(sql`
         update commands set status = 'error', error = 'Comando expirou antes de ser executado.', payload = '{}', finished_at = now()
         where status = 'pending' and created_at < now() - make_interval(secs => ${COMMAND_TTL_MS / 1000})`);
+      // A command stuck in "running" (worker crashed mid-way) must not keep its plaintext payload.
+      await db.execute(sql`
+        update commands set status = 'error', error = 'Comando interrompido.', payload = '{}', finished_at = now()
+        where status = 'running' and created_at < now() - interval '10 minutes'`);
       // Results are read (and deleted) by the web app right away; drop whatever is left.
       await db.execute(sql`delete from commands where finished_at < now() - interval '5 minutes'`);
       const { rows } = await pool.query<{ id: number }>(`
@@ -182,6 +187,11 @@ async function listen() {
   await client.query(`listen ${COMMANDS_CHANNEL}`);
   log.info("listening for commands");
 }
+
+// Only one worker runs per database, so anything still "running" belonged to a previous process.
+await db.execute(sql`
+  update commands set status = 'error', error = 'Comando interrompido.', payload = '{}', finished_at = now()
+  where status = 'running'`);
 
 // Boot: resume enabled sessions slowly so reconnects never arrive as a burst.
 const enabled = await db.select({ id: waSessions.id }).from(waSessions).where(eq(waSessions.enabled, true));

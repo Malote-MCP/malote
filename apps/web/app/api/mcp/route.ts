@@ -55,7 +55,7 @@ function resolveJid(jid: string, selfJid: string | null) {
 async function runCommand(sessionId: string, type: CommandType, payload: unknown, timeoutMs = 45_000) {
   const id = await enqueueCommand(db, { sessionId, type, payload, source: "mcp" });
   const done = await waitForCommand(db, id, timeoutMs);
-  if (!done) throw new Error("O WhatsApp demorou para responder. Tente de novo.");
+  if (!done) throw new Error("O WhatsApp demorou para responder. Se era um envio, confira a conversa antes de tentar de novo.");
   await deleteCommand(db, id);
   if (done.status === "error") throw new Error(done.error ?? "Falhou.");
   return done.result as Record<string, unknown>;

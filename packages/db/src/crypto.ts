@@ -1,10 +1,11 @@
 /**
- * End-to-end encryption of stored WhatsApp content.
+ * Encryption at rest of stored WhatsApp content.
  *
  * Each user has an X25519 key pair. The public key lives in `wa_sessions.public_key`; the private key
  * is only stored wrapped (AES-256-GCM) with a key derived from each of the user's MCP tokens, and the
- * server keeps only SHA-256 hashes of those tokens. So the database alone — or whoever operates it —
- * cannot decrypt anything.
+ * server keeps only SHA-256 hashes of those tokens. So a copy of the database alone cannot be read.
+ * This is not end-to-end: the running servers see new messages before sealing them and receive the
+ * token on every MCP request (see /seguranca).
  *
  * The worker writes without the user present: per "epoch" it generates an ephemeral X25519 key, does
  * ECDH with the user's public key and keeps the derived AES key in memory only. The ephemeral public
