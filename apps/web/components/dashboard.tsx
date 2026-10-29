@@ -156,7 +156,7 @@ function CopyBlock({ label, value }: { label: string; value: string }) {
 function McpCard({ hasKey, onKey }: { hasKey: boolean; onKey: (v: boolean) => void }) {
   const [tokens, setTokens] = useState<Token[]>([]);
   const [fresh, setFresh] = useState<string | null>(null);
-  const [origin, setOrigin] = useState("https://malote.fly.dev");
+  const [origin, setOrigin] = useState("https://malote.io");
 
   const load = useCallback(async () => {
     const res = await fetch("/api/tokens", { cache: "no-store" });

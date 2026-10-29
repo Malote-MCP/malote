@@ -95,7 +95,7 @@ async function downloadResult(
   return { content };
 }
 
-const origin = () => process.env.PUBLIC_URL ?? "https://malote.fly.dev";
+const origin = () => process.env.PUBLIC_URL ?? "https://malote.io";
 
 const handler = createMcpHandler(
   (server) => {
