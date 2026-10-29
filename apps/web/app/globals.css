@@ -1,4 +1,7 @@
 @import "tailwindcss";
+@import "./landing.css";
+@import "./product-demo.css";
+@import "./trust.css";
 
 @theme {
   --color-paper: #f6f2ea;

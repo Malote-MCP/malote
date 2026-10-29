@@ -6,8 +6,14 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces", axes: ["opsz"] });
 
 export const metadata: Metadata = {
-  title: "Malote — seu WhatsApp dentro do Claude",
-  description: "Conecte seu WhatsApp ao Claude via MCP: leia conversas, busque mensagens e envie textos e arquivos.",
+  title: "Malote — WhatsApp conectado ao seu assistente via MCP",
+  description: "Conecte seu WhatsApp ao Claude e a outros assistentes via MCP. Busque mensagens, recupere documentos e envie respostas com acesso gerenciado pelo painel.",
+  openGraph: {
+    title: "Malote — suas conversas e arquivos no seu assistente",
+    description: "Conexão entre WhatsApp e assistentes via MCP. Conheça o produto, as ferramentas e os controles de acesso.",
+    locale: "pt_BR",
+    type: "website",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
