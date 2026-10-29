@@ -7,8 +7,8 @@ export const dynamic = "force-dynamic";
 const REPO = process.env.SOURCE_REPO ?? null;
 
 /**
- * Public: which build is running. Each image is built by CI from a public commit and has a signed
- * provenance attestation, so anyone can check the digest below against the source (see /seguranca).
+ * Public: which build is running, so version changes are visible. CI builds each image from a commit
+ * and attests its provenance.
  * This is reported by the servers themselves; see /seguranca for what that does and does not prove.
  */
 export async function GET() {

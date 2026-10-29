@@ -6,7 +6,6 @@ export const metadata: Metadata = {
   description: "O que o Malote guarda, o que fica cifrado, o que não fica e como verificar o código que está rodando.",
 };
 
-const repo = process.env.SOURCE_REPO;
 const site = process.env.PUBLIC_URL ?? "https://malote-web.fly.dev";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -37,7 +36,7 @@ export default function Seguranca() {
         <p className="mt-4 text-lg leading-relaxed text-ink-2">
           Resumo honesto: o histórico que o Malote guarda é cifrado com uma chave que só o seu token destrava. Quem opera
           o serviço não consegue ler o que está no banco. Mas o seu WhatsApp roda nos nossos servidores, então você
-          precisa confiar que o código em execução é o publicado. Abaixo, o que isso significa e como conferir.
+          precisa confiar em quem opera o serviço. Abaixo, o que isso significa.
         </p>
 
         <Section title="O que fica cifrado">
@@ -71,8 +70,7 @@ export default function Seguranca() {
           <p>
             Para funcionar, o servidor recebe cada mensagem nova do WhatsApp antes de cifrar, e recebe o seu token a cada
             chamada do Claude. Um operador mal-intencionado que alterasse o código poderia capturar essas informações. A
-            criptografia impede o acesso casual ou por vazamento; contra uma alteração deliberada do código, a proteção é a
-            transparência abaixo.
+            criptografia impede o acesso casual ou por vazamento, mas não protege contra uma alteração deliberada do código.
           </p>
           <p>
             Se esse modelo de confiança não serve para você, não conecte. Um modo local, em que tudo roda na sua própria
@@ -80,37 +78,15 @@ export default function Seguranca() {
           </p>
         </Section>
 
-        <Section title="Como verificar o que está rodando">
-          <ol className="list-decimal space-y-3 pl-5">
-            <li>
-              O código é público{repo ? (
-                <>
-                  {" "}
-                  em{" "}
-                  <a className="text-moss underline" href={`https://github.com/${repo}`}>
-                    github.com/{repo}
-                  </a>
-                </>
-              ) : null}
-              . Toda alteração fica registrada em um commit visível.
-            </li>
-            <li>
-              As imagens só são publicadas pelo GitHub Actions a partir desse repositório, com um atestado de proveniência
-              assinado (Sigstore). Ele liga o digest de cada imagem ao commit e ao workflow que a gerou.
-            </li>
-            <li>
-              Os servidores informam o digest da imagem e o commit em execução:
-              <Code>{`curl ${site}/api/transparency`}</Code>
-            </li>
-            <li>
-              Confira que esse digest foi gerado a partir do código público:
-              <Code>{`gh attestation verify oci://ghcr.io/${repo ?? "<repo>"}/worker@sha256:<digest> --repo ${repo ?? "<repo>"}`}</Code>
-            </li>
-          </ol>
+        <Section title="O que está rodando">
           <p>
-            Importante: o endpoint de transparência é informado pelos próprios servidores. Ele prova o que foi publicado e
-            torna qualquer troca pública rastreável, mas não é uma prova criptográfica do que roda dentro da máquina. Isso
-            exigiria execução em enclave com atestação remota, que está no nosso roadmap.
+            Os servidores informam a versão (commit) e a imagem em execução, e qualquer troca de versão aparece aqui:
+          </p>
+          <Code>{`curl ${site}/api/transparency`}</Code>
+          <p>
+            Importante: o código-fonte do Malote não é público hoje, e esse endpoint é informado pelos próprios servidores.
+            Ele mostra quando a versão muda, mas não permite que você confira, por conta própria, o que essa versão faz.
+            Se você precisa dessa garantia, o Malote ainda não é para você.
           </p>
         </Section>
 
