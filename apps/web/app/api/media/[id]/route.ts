@@ -1,12 +1,15 @@
 import { getSessionByUserId, loadOpener, mediaFiles } from "@malote/db";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
+import { movedToEnclave } from "@/lib/enclave";
 import { verifyToken } from "@/lib/tokens";
 
 export const dynamic = "force-dynamic";
 
 /** Serves a downloaded media file to its owner. Needs the MCP token: it is what decrypts the file. */
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const moved = movedToEnclave();
+  if (moved) return moved;
   const { id } = await params;
   const bearer = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   const auth = bearer ? await verifyToken(bearer) : null;

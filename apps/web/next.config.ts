@@ -4,7 +4,7 @@ import path from "node:path";
 const config: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: path.join(import.meta.dirname, "../.."),
-  transpilePackages: ["@malote/db"],
+  transpilePackages: ["@malote/db", "@malote/mcp"],
   serverExternalPackages: ["pg"],
 };
 

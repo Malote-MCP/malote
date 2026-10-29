@@ -42,7 +42,7 @@ jobs:
         run: |
           export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
           for i in 1 2; do
-            docker buildx build --no-cache \
+            docker buildx build --no-cache --provenance=false \
               --file apps/worker/Dockerfile \
               --build-arg GIT_SHA=${{ github.sha }} \
               --build-arg SOURCE_DATE_EPOCH \

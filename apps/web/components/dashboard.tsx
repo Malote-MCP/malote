@@ -153,18 +153,35 @@ function CopyBlock({ label, value }: { label: string; value: string }) {
   );
 }
 
-function McpCard({ hasKey, onKey }: { hasKey: boolean; onKey: (v: boolean) => void }) {
+/**
+ * Token endpoints. With an enclave, the browser talks to it directly (signed in via the Neon Auth JWT),
+ * so new tokens never pass through the web server.
+ */
+async function tokensFetch(enclaveUrl: string | null, path: "" | `/${string}`, init: RequestInit = {}) {
+  if (!enclaveUrl) {
+    const legacy = path ? `/api/tokens?id=${path.slice(1)}` : "/api/tokens";
+    return fetch(legacy, { cache: "no-store", ...init });
+  }
+  const jwt = (await authClient.token()).data?.token;
+  return fetch(`${enclaveUrl}/v1/tokens${path}`, {
+    cache: "no-store",
+    ...init,
+    headers: { authorization: `Bearer ${jwt ?? ""}`, "content-type": "application/json" },
+  });
+}
+
+function McpCard({ hasKey, onKey, enclaveUrl }: { hasKey: boolean; onKey: (v: boolean) => void; enclaveUrl: string | null }) {
   const [tokens, setTokens] = useState<Token[]>([]);
   const [fresh, setFresh] = useState<string | null>(null);
   const [origin, setOrigin] = useState("https://malote.io");
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/tokens", { cache: "no-store" });
+    const res = await tokensFetch(enclaveUrl, "");
     if (!res.ok) return;
     const body = (await res.json()) as { tokens: Token[]; hasKey: boolean };
     setTokens(body.tokens);
     onKey(body.hasKey);
-  }, [onKey]);
+  }, [onKey, enclaveUrl]);
 
   useEffect(() => {
     setOrigin(window.location.origin);
@@ -190,7 +207,7 @@ function McpCard({ hasKey, onKey }: { hasKey: boolean; onKey: (v: boolean) => vo
         body = { name, reset: true };
       else return;
     }
-    const res = await fetch("/api/tokens", { method: "POST", body: JSON.stringify(body) });
+    const res = await tokensFetch(enclaveUrl, "", { method: "POST", body: JSON.stringify(body) });
     if (res.ok) {
       setFresh((await res.json()).token);
       void load();
@@ -201,11 +218,11 @@ function McpCard({ hasKey, onKey }: { hasKey: boolean; onKey: (v: boolean) => vo
 
   async function revoke(id: string) {
     if (!confirm("Revogar este token? Clientes usando ele perdem o acesso.")) return;
-    await fetch(`/api/tokens?id=${id}`, { method: "DELETE" });
+    await tokensFetch(enclaveUrl, `/${id}`, { method: "DELETE" });
     void load();
   }
 
-  const url = `${origin}/api/mcp`;
+  const url = enclaveUrl ? `${enclaveUrl}/mcp` : `${origin}/api/mcp`;
   const token = fresh ?? "SEU_TOKEN";
   const claudeCode = `claude mcp add --transport http malote ${url} \\\n  --header "Authorization: Bearer ${token}"`;
   const desktop = JSON.stringify(
@@ -273,7 +290,7 @@ function McpCard({ hasKey, onKey }: { hasKey: boolean; onKey: (v: boolean) => vo
   );
 }
 
-export function Dashboard({ name }: { name: string }) {
+export function Dashboard({ name, enclaveUrl = null }: { name: string; enclaveUrl?: string | null }) {
   const router = useRouter();
   const [hasKey, setHasKey] = useState(false);
   return (
@@ -295,7 +312,7 @@ export function Dashboard({ name }: { name: string }) {
         </div>
       </header>
       <main className="mx-auto max-w-4xl space-y-6 px-4 pb-16 pt-4 sm:px-6">
-        <McpCard hasKey={hasKey} onKey={setHasKey} />
+        <McpCard hasKey={hasKey} onKey={setHasKey} enclaveUrl={enclaveUrl} />
         <ConnectionCard hasKey={hasKey} />
       </main>
     </div>

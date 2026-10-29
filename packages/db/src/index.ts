@@ -6,6 +6,7 @@ export * from "./schema.ts";
 export * from "./queries.ts";
 export * from "./commands.ts";
 export * from "./crypto.ts";
+export * from "./tokens.ts";
 export { schema };
 
 export type Db = NodePgDatabase<typeof schema>;

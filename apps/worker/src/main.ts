@@ -13,6 +13,8 @@ import { eq, sql } from "drizzle-orm";
 import pg from "pg";
 import pino from "pino";
 import { env } from "./env.ts";
+import type { WhatsAppOps } from "@malote/mcp";
+import { serveDev, serveTls } from "./http.ts";
 import { encryptLegacy } from "./legacy.ts";
 import { PolicyError } from "./policy.ts";
 import { SessionRunner } from "./session.ts";
@@ -202,6 +204,39 @@ setInterval(() => {
   for (const r of runners.values()) void r.heartbeat().catch(() => {});
   void reportWorker().catch(() => {});
 }, 60_000);
+
+// The enclave API (MCP, media, tokens, attestation) talks to the sessions in this process directly.
+const ops: WhatsAppOps = {
+  sendText: (id, p) => connectedRunner(id).sendText(p.chatJid, p.text, { quoted: p.quoted }),
+  sendFile: (id, p) => connectedRunner(id).sendFile(p),
+  downloadMedia: (id, p) => connectedRunner(id).downloadMedia(p),
+};
+if (env.inEnclave && env.enclave) {
+  if (!env.tlsWrapKey) throw new Error("tls-wrap-key secret is missing");
+  await serveTls({
+    db,
+    ops,
+    log,
+    config: env.enclave,
+    tlsWrapKey: env.tlsWrapKey,
+    origin: `https://${env.enclave.hostname}`,
+    webOrigin: env.enclave.webOrigin,
+    jwksUrl: env.enclave.neonAuthJwksUrl,
+  });
+} else if (env.devHttpPort) {
+  serveDev(
+    {
+      db,
+      ops,
+      log,
+      config: null,
+      origin: `http://localhost:${env.devHttpPort}`,
+      webOrigin: process.env.WEB_ORIGIN ?? "http://localhost:3000",
+      jwksUrl: process.env.NEON_AUTH_JWKS_URL ?? null,
+    },
+    env.devHttpPort,
+  );
+}
 
 for (const [i, s] of enabled.entries()) {
   setTimeout(() => void startSession(s.id).catch((e) => log.error(e, "session start failed")), i * 3000);

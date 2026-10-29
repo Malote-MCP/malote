@@ -10,11 +10,16 @@
   },
   "dependencies": {
     "@malote/db": "workspace:*",
+    "@malote/mcp": "workspace:*",
+    "@modelcontextprotocol/server": "^2.4.0",
+    "acme-client": "^5.4.0",
     "baileys": "7.0.0-rc14",
     "drizzle-orm": "^0.45.4",
+    "jose": "^6.2.5",
     "pg": "^8.23.1",
     "pino": "^10.4.0",
-    "tsx": "^4.23.15"
+    "tsx": "^4.23.15",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

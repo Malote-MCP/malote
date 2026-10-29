@@ -176,6 +176,17 @@ export const encEpochs = pgTable("enc_epochs", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * The enclave's HTTPS certificate, so restarts don't hit Let's Encrypt rate limits. `data` is the
+ * private key and certificate, AES-GCM encrypted with a key only the attested enclave can fetch.
+ */
+export const tlsCerts = pgTable("tls_certs", {
+  hostname: text("hostname").primaryKey(),
+  data: bytea("data").notNull(),
+  notAfter: timestamp("not_after", { withTimezone: true }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 /** Image each worker process runs, for the public transparency endpoint. */
 export const workers = pgTable("workers", {
   id: text("id").primaryKey(),

@@ -6,8 +6,10 @@ COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/web/package.json apps/web/
 COPY apps/worker/package.json apps/worker/
 COPY packages/db/package.json packages/db/
+COPY packages/mcp/package.json packages/mcp/
 RUN pnpm install --frozen-lockfile --filter "@malote/web..."
 COPY packages/db packages/db
+COPY packages/mcp packages/mcp
 COPY apps/web apps/web
 # Placeholders only so `next build` can evaluate modules; real values come from Fly secrets at runtime.
 RUN NEON_AUTH_BASE_URL=https://build.invalid/auth \

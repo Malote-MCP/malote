@@ -1,0 +1,10 @@
+{
+  "hostname": "mcp-staging.malote.io",
+  "webOrigin": "https://malote-web-staging-347216371802.southamerica-east1.run.app",
+  "neonAuthJwksUrl": "https://ep-square-shadow-b6gshokp.neonauth.c-2.sa-east-1.aws.neon.tech/neondb/auth/.well-known/jwks.json",
+  "secretsProject": "malote-513023",
+  "wifAudience": "//iam.googleapis.com/projects/347216371802/locations/global/workloadIdentityPools/malote-staging/providers/attestation",
+  "secretPrefix": "staging-",
+  "acmeEmail": "luvi.germanos@coraassist.com",
+  "acmeDirectory": "production"
+}

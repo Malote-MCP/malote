@@ -8,13 +8,21 @@ COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/web/package.json apps/web/
 COPY apps/worker/package.json apps/worker/
 COPY packages/db/package.json packages/db/
+COPY packages/mcp/package.json packages/mcp/
 RUN pnpm install --frozen-lockfile --prod --filter "@malote/worker..." \
   && find . -name .modules.yaml -delete \
   && rm -f node_modules/.pnpm-workspace-state*.json \
   && rm -rf /root/.cache /root/.local/share/pnpm /root/.local/state /tmp/*
 COPY packages/db packages/db
+COPY packages/mcp packages/mcp
 COPY apps/worker apps/worker
 WORKDIR /repo/apps/worker
+# Confidential Space launch policy: the operator may only pick which committed config to use
+# (MALOTE_ENV). Any other override (NODE_OPTIONS, a different command, …) would change what runs
+# without changing the image digest, so the launcher refuses it. Logs carry no message content.
+LABEL "tee.launch_policy.allow_env_override"="MALOTE_ENV"
+LABEL "tee.launch_policy.log_redirect"="always"
+EXPOSE 80 443
 # Commit this image was built from (set by CI), published on /api/transparency.
 ARG GIT_SHA
 ENV GIT_SHA=$GIT_SHA

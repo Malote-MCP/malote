@@ -22,6 +22,13 @@
       "when": 1793227233693,
       "tag": "0002_encryption",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793244540135,
+      "tag": "0003_tls_certs",
+      "breakpoints": true
     }
   ]
 }
