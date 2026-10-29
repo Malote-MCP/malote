@@ -123,7 +123,7 @@ export default function Security() {
           </div>
         </div>
       </main>
-      <footer className="site-container site-footer"><div className="site-footer-bottom"><span>Malote · L&amp;P Soluções · CNPJ 63.030.646/0001-31</span><Link href="/">Voltar ao produto <span aria-hidden="true">↗</span></Link></div></footer>
+      <footer className="site-container site-footer"><div className="site-footer-bottom"><span>Malote · L&amp;P Soluções · CNPJ 63.030.646/0001-31</span><span><Link href="/privacidade">Privacidade</Link> · <Link href="/termos">Termos de uso</Link> · <Link href="/">Voltar ao produto <span aria-hidden="true">↗</span></Link></span></div></footer>
     </div>
   );
 }
