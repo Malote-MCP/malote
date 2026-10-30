@@ -15,5 +15,5 @@ gcloud compute instances create "$VM" --project "$PROJECT" --zone "$ZONE" \
   --confidential-compute-type=SEV --maintenance-policy=TERMINATE --shielded-secure-boot \
   --image-project=confidential-space-images --image-family=confidential-space \
   --service-account="$SA" --scopes=cloud-platform \
-  --address="$IP" --tags=malote-enclave "${LIMIT[@]}" \
+  --address="$IP" --tags=malote-enclave ${LIMIT[@]+"${LIMIT[@]}"} \
   --metadata="^~^tee-image-reference=$IMAGE@$DIGEST~tee-env-MALOTE_ENV=$ENV_NAME~tee-container-log-redirect=true~tee-restart-policy=Always"

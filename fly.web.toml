@@ -7,6 +7,9 @@ primary_region = "gru"
 [env]
   PUBLIC_URL = "https://malote.io"
   SOURCE_REPO = "Malote-MCP/malote"
+  # MCP, media and tokens are served by the confidential VM; the web app only hosts the panel.
+  ENCLAVE_URL = "https://mcp.malote.io"
+  ENCLAVE_ENV = "production"
 
 [http_service]
   internal_port = 8080
