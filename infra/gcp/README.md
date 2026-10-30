@@ -1,6 +1,6 @@
 # Enclave infrastructure (Google Cloud)
 
-Project `malote-513023`, region `southamerica-east1`. One environment per `MALOTE_ENV` (`staging`, later `production`).
+Project `malote-513023`, region `southamerica-east1`. One environment per `MALOTE_ENV` (`staging`, `production`).
 
 - `setup-env.sh <env>` — one time: workload identity pool for attestation, VM service account, static IP, firewall.
 - `allow-digest.sh <env> <sha256:…>` — lets an image digest read that environment's secrets. The digest is also

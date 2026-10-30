@@ -1,0 +1,10 @@
+{
+  "hostname": "mcp.malote.io",
+  "webOrigin": "https://malote.io",
+  "neonAuthJwksUrl": "https://ep-lucky-frost-b6j9qp0k.neonauth.c-2.sa-east-1.aws.neon.tech/neondb/auth/.well-known/jwks.json",
+  "secretsProject": "malote-513023",
+  "wifAudience": "//iam.googleapis.com/projects/347216371802/locations/global/workloadIdentityPools/malote-production/providers/attestation",
+  "secretPrefix": "production-",
+  "acmeEmail": "luvi.germanos@coraassist.com",
+  "acmeDirectory": "production"
+}
