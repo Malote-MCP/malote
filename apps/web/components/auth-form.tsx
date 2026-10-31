@@ -32,9 +32,11 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
     const email = String(form.get("email"));
     const password = String(form.get("password"));
     try {
-      const { error } = isSignUp
-        ? await authClient.signUp.email({ email, password, name: String(form.get("name") || email.split("@")[0]) })
-        : await authClient.signIn.email({ email, password });
+      const call = isSignUp
+        ? authClient.signUp.email({ email, password, name: String(form.get("name") || email.split("@")[0]) })
+        : authClient.signIn.email({ email, password });
+      const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error("sem resposta em 20 s")), 20_000));
+      const { error } = await Promise.race([call, timeout]);
       if (error) {
         setError(error.message || "Não foi possível entrar. Tente de novo.");
         return;
