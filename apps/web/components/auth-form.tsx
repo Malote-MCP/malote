@@ -31,13 +31,20 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
     const form = new FormData(e.currentTarget);
     const email = String(form.get("email"));
     const password = String(form.get("password"));
-    const { error } = isSignUp
-      ? await authClient.signUp.email({ email, password, name: String(form.get("name") || email.split("@")[0]) })
-      : await authClient.signIn.email({ email, password });
-    setPending(null);
-    if (error) {
-      setError(error.message || "Não foi possível entrar. Tente de novo.");
+    try {
+      const { error } = isSignUp
+        ? await authClient.signUp.email({ email, password, name: String(form.get("name") || email.split("@")[0]) })
+        : await authClient.signIn.email({ email, password });
+      if (error) {
+        setError(error.message || "Não foi possível entrar. Tente de novo.");
+        return;
+      }
+    } catch (e) {
+      // Network failures (offline, blocked by an extension) reject instead of returning { error }.
+      setError(`Não foi possível falar com o servidor de login (${(e as Error).message}). Tente de novo.`);
       return;
+    } finally {
+      setPending(null);
     }
     router.push("/app");
     router.refresh();

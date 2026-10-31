@@ -27,10 +27,17 @@ function formatPhone(p: string | null) {
 function ConnectionCard({ hasKey }: { hasKey: boolean }) {
   const [s, setS] = useState<Status | null>(null);
   const [busy, setBusy] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/whatsapp", { cache: "no-store" });
-    if (res.ok) setS(await res.json());
+    try {
+      const res = await fetch("/api/whatsapp", { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setS(await res.json());
+      setLoadError(null);
+    } catch (e) {
+      setLoadError((e as Error).message);
+    }
   }, []);
 
   const waiting = !!s && s.enabled && s.status !== "connected" && s.status !== "error";
@@ -68,7 +75,12 @@ function ConnectionCard({ hasKey }: { hasKey: boolean }) {
         )}
       </div>
 
-      {!s && <p className="mt-6 text-ink-3">Carregando…</p>}
+      {!s && !loadError && <p className="mt-6 text-ink-3">Carregando…</p>}
+      {!s && loadError && (
+        <p className="mt-6 rounded-xl bg-clay/10 px-3 py-2 text-sm text-clay">
+          Não foi possível ler o status do WhatsApp ({loadError}). Recarregue a página; se continuar, saia e entre de novo.
+        </p>
+      )}
 
       {s?.status === "connected" && (
         <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-paper p-5">
