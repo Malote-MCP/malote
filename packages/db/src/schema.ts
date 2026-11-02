@@ -214,3 +214,16 @@ export const apiTokens = pgTable(
   (t) => [uniqueIndex("api_tokens_hash_idx").on(t.tokenHash), index("api_tokens_user_idx").on(t.userId)],
 );
 
+
+/** Which version of the Terms of Use and Privacy Policy each user accepted, and when (Termos 2.1). */
+export const termsAcceptances = pgTable(
+  "terms_acceptances",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").notNull(),
+    termsVersion: text("terms_version").notNull(),
+    privacyVersion: text("privacy_version").notNull(),
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("terms_acceptances_user_version_idx").on(t.userId, t.termsVersion, t.privacyVersion)],
+);

@@ -29,6 +29,13 @@
       "when": 1793244540135,
       "tag": "0003_tls_certs",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1793660625595,
+      "tag": "0004_terms_acceptances",
+      "breakpoints": true
     }
   ]
 }

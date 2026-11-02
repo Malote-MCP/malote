@@ -130,6 +130,13 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
             {pending === "email" ? "Aguarde…" : isSignUp ? "Criar conta" : "Entrar"}
           </button>
         </form>
+        {isSignUp && (
+          <p className="mt-4 text-center text-xs text-ink-3">
+            Ao criar sua conta, com e-mail ou Google, você declara ter 18 anos ou mais e aceita os{" "}
+            <Link href="/termos" target="_blank" className="underline underline-offset-2">Termos de Uso</Link> e a{" "}
+            <Link href="/privacidade" target="_blank" className="underline underline-offset-2">Política de Privacidade</Link>.
+          </p>
+        )}
       </div>
       <p className="mt-6 text-sm text-ink-3">
         {isSignUp ? "Já tem conta? " : "Ainda não tem conta? "}

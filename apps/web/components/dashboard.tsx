@@ -2,7 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { authClient } from "@/lib/auth/client";
+import { DeleteAccountCard } from "./account";
 import { EnclaveStatus } from "./enclave-status";
 import { Logo } from "./logo";
 
@@ -336,6 +338,11 @@ export function Dashboard({
         <EnclaveStatus enclaveUrl={enclaveUrl} env={enclaveEnv} />
         <McpCard hasKey={hasKey} onKey={setHasKey} enclaveUrl={enclaveUrl} />
         <ConnectionCard hasKey={hasKey} />
+        <DeleteAccountCard />
+        <p className="text-center text-xs text-ink-3">
+          <Link href="/termos" className="hover:underline">Termos de Uso</Link> ·{" "}
+          <Link href="/privacidade" className="hover:underline">Política de Privacidade</Link>
+        </p>
       </main>
     </div>
   );

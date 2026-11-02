@@ -53,7 +53,7 @@ export default function Security() {
           <nav className="trust-toc" aria-label="Nesta página">
             <p className="site-eyebrow">NESTA PÁGINA</p>
             {contents.map(([id, label], i) => <a key={id} href={`#${id}`}><span>0{i + 1}</span>{label}</a>)}
-            <a href="mailto:luvi.germanos@coraassist.com">Fale com o responsável <span aria-hidden="true">↗</span></a>
+            <a href="mailto:contato@coraassist.com">Fale com o responsável <span aria-hidden="true">↗</span></a>
           </nav>
 
           <div className="trust-articles">
@@ -123,12 +123,12 @@ export default function Security() {
               <p className="site-eyebrow">CONTATO</p>
               <h2 id="contact-title">Pergunte antes de conectar.</h2>
               <p>Para suporte ou solicitações sobre seus dados, fale com o responsável pelo Malote. Não envie senhas, tokens ou QR codes de conexão.</p>
-              <a className="site-text-link" href="mailto:luvi.germanos@coraassist.com">luvi.germanos@coraassist.com <span aria-hidden="true">↗</span></a>
+              <a className="site-text-link" href="mailto:contato@coraassist.com">contato@coraassist.com <span aria-hidden="true">↗</span></a>
             </section>
           </div>
         </div>
       </main>
-      <footer className="site-container site-footer"><div className="site-footer-bottom"><span>Malote · L&amp;P Soluções · CNPJ 63.030.646/0001-31</span><span><Link href="/privacidade">Privacidade</Link> · <Link href="/termos">Termos de uso</Link> · <Link href="/">Voltar ao produto <span aria-hidden="true">↗</span></Link></span></div></footer>
+      <footer className="site-container site-footer"><div className="site-footer-bottom"><span>Malote · Cora Assist Ltda · CNPJ 69.708.277/0001-70</span><span><Link href="/privacidade">Privacidade</Link> · <Link href="/termos">Termos de uso</Link> · <Link href="/">Voltar ao produto <span aria-hidden="true">↗</span></Link></span></div></footer>
     </div>
   );
 }
