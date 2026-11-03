@@ -35,8 +35,13 @@ CREATE INDEX "billing_subscription_idx" ON "billing" USING btree ("asaas_subscri
 CREATE INDEX "billing_checkout_idx" ON "billing" USING btree ("asaas_checkout_id");--> statement-breakpoint
 CREATE INDEX "referrals_referrer_idx" ON "referrals" USING btree ("referrer_user_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "referrals_wa_jid_idx" ON "referrals" USING btree ("wa_jid");--> statement-breakpoint
--- Everyone who already has an account starts the 15-day trial at launch.
-INSERT INTO "billing" ("user_id", "trial_ends_at", "access_until", "referral_code")
-SELECT u.id::text, now() + interval '15 days', now() + interval '15 days', substr(md5(random()::text || u.id::text), 1, 8)
-FROM neon_auth."user" u
-ON CONFLICT DO NOTHING;
+-- Everyone who already has an account starts the 15-day trial at launch. Neon Auth's table only
+-- exists where Neon Auth is enabled (not on a fresh test or self-hosted database).
+DO $$ BEGIN
+  IF to_regclass('neon_auth."user"') IS NOT NULL THEN
+    INSERT INTO "billing" ("user_id", "trial_ends_at", "access_until", "referral_code")
+    SELECT u.id::text, now() + interval '15 days', now() + interval '15 days', substr(md5(random()::text || u.id::text), 1, 8)
+    FROM neon_auth."user" u
+    ON CONFLICT DO NOTHING;
+  END IF;
+END $$;
