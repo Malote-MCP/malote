@@ -67,3 +67,14 @@ Confirm the revision is ready, receives production traffic, and `https://malote.
 The web deployment does not deploy the enclave. Worker images are published by `.github/workflows/publish-worker.yml`.
 After reviewing a worker digest, use `allow-digest.sh <env> <sha256:…>` and commit the public digest list, then use `launch.sh <env> <sha256:…>` to recreate that environment's VM. This interrupts the worker; do not run it for web-only changes.
 Use `start.sh staging` to restart a stopped staging VM; staging stops after three hours.
+
+
+## Live source-to-image check
+
+The landing header and architecture diagram share a live verification. The browser sends a fresh nonce to the production enclave, verifies the Google JWT signature, issuer, audience, nonce, environment, stable Confidential Space image and disabled debugging, then checks its image digest against the public production allowlist.
+
+`GET /api/verification?digest=sha256:…` verifies the matching GitHub SLSA provenance bundle with Sigstore. It requires the `Malote-MCP/malote` publish-worker workflow on `main`, a matching worker image subject digest, and that workflow's source commit. Successful source verification is cached for five minutes; the browser requests a fresh enclave proof every five minutes. Missing proofs, HTTP failures or signature mismatches never produce a green check.
+
+Google attestation is verified in the browser; Sigstore provenance is verified by the web server. This links the running worker digest to a signed build from a Git commit, not to a new independent rebuild of the code, and it does not attest the Cloud Run web app. The browser cannot inspect the TLS peer key. For independent verification, use `gh attestation verify oci://ghcr.io/malote-mcp/malote/worker@sha256:<digest> --repo Malote-MCP/malote` and `apps/worker/scripts/verify-attestation.ts` (which also checks the TLS key).
+
+Run `pnpm --filter @malote/web test` for the signed provenance fixture tests. They verify the real public bundle and reject a different digest or tampered commit; Sigstore needs network access to refresh its trusted roots.
