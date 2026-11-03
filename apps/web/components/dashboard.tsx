@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { authClient } from "@/lib/auth/client";
+import { BillingCard, type BillingView } from "./billing";
 import { DeleteAccountCard } from "./account";
 import { EnclaveStatus } from "./enclave-status";
 import { Logo } from "./logo";
@@ -309,10 +310,12 @@ export function Dashboard({
   name,
   enclaveUrl = null,
   enclaveEnv = null,
+  billing,
 }: {
   name: string;
   enclaveUrl?: string | null;
   enclaveEnv?: string | null;
+  billing: BillingView;
 }) {
   const router = useRouter();
   const [hasKey, setHasKey] = useState(false);
@@ -336,8 +339,10 @@ export function Dashboard({
       </header>
       <main className="mx-auto max-w-4xl space-y-6 px-4 pb-16 pt-4 sm:px-6">
         <EnclaveStatus enclaveUrl={enclaveUrl} env={enclaveEnv} />
+        {!billing.hasAccess && <BillingCard b={billing} />}
         <McpCard hasKey={hasKey} onKey={setHasKey} enclaveUrl={enclaveUrl} />
         <ConnectionCard hasKey={hasKey} />
+        {billing.hasAccess && <BillingCard b={billing} />}
         <DeleteAccountCard />
         <p className="text-center text-xs text-ink-3">
           <Link href="/termos" className="hover:underline">Termos de Uso</Link> ·{" "}

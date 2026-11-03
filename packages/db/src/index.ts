@@ -9,6 +9,7 @@ export * from "./crypto.ts";
 export * from "./tokens.ts";
 export * from "./account.ts";
 export * from "./limits.ts";
+export * from "./billing.ts";
 export * from "./admin.ts";
 export { schema };
 

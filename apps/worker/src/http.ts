@@ -9,6 +9,7 @@
 import {
   createToken,
   getSessionByUserId,
+  hasAccess,
   listTokens,
   loadOpener,
   mediaFiles,
@@ -140,6 +141,7 @@ export function createEnclaveApi(deps: Deps) {
       const token = bearerOf(req);
       const auth = token ? await verifyToken(db, token) : null;
       if (!auth) return json(res, 401, { error: "Unauthorized" });
+      if (!(await hasAccess(db, auth.userId))) return json(res, 402, { error: "Assinatura necessária." });
       const session = await getSessionByUserId(db, auth.userId);
       const [file] = session
         ? await db

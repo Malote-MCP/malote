@@ -24,6 +24,7 @@ export type AdminOverview = {
   sends7d: number;
   signupsByDay: { day: string; count: number }[];
   workers: { id: string; gitSha: string | null; imageRef: string | null; seenAt: string }[];
+  billing: { trial: number; paying: number; free: number; expired: number; monthly: number; yearly: number; mrr: number };
 };
 
 export async function adminOverview(db: Db): Promise<AdminOverview> {
@@ -62,7 +63,29 @@ export async function adminOverview(db: Db): Promise<AdminOverview> {
     await db.execute(sql`select id, git_sha, image_ref, seen_at from workers where seen_at > now() - interval '1 day' order by seen_at desc`)
   ).rows;
 
+  const [b] = (
+    await db.execute(sql`select
+      count(*) filter (where free_forever) as free,
+      count(*) filter (where not free_forever and status = 'active' and asaas_subscription_id is not null) as paying,
+      count(*) filter (where not free_forever and status = 'active' and asaas_subscription_id is not null and plan = 'monthly') as monthly,
+      count(*) filter (where not free_forever and status = 'active' and asaas_subscription_id is not null and plan = 'yearly') as yearly,
+      count(*) filter (where not free_forever and status = 'trial' and access_until > now()) as trial,
+      count(*) filter (where not free_forever and (access_until is null or access_until <= now())) as expired
+      from billing`)
+  ).rows;
+  const monthly = n(b?.monthly);
+  const yearly = n(b?.yearly);
+
   return {
+    billing: {
+      trial: n(b?.trial),
+      paying: n(b?.paying),
+      free: n(b?.free),
+      expired: n(b?.expired),
+      monthly,
+      yearly,
+      mrr: Math.round((monthly * 29.9 + (yearly * 299) / 12) * 100) / 100,
+    },
     users: n(u?.users),
     usersLast7d: n(u?.d7),
     usersLast30d: n(u?.d30),
@@ -100,6 +123,10 @@ export type AdminUser = {
   sends7d: number;
   limitPerMinute: number | null;
   limitPerDay: number | null;
+  billingStatus: string | null;
+  plan: string | null;
+  freeForever: boolean;
+  accessUntil: string | null;
 };
 
 export async function adminUsers(db: Db): Promise<AdminUser[]> {
@@ -114,8 +141,10 @@ export async function adminUsers(db: Db): Promise<AdminUser[]> {
         (select max(last_used_at) from api_tokens t where t.user_id = u.id::text) as token_used,
         (select coalesce(sum(count), 0) from send_counts c where c.session_id = s.id and c.day = ${today}) as sends_today,
         (select coalesce(sum(count), 0) from send_counts c where c.session_id = s.id and c.day >= ${weekAgo}) as sends_7d,
-        l.per_minute, l.per_day
+        l.per_minute, l.per_day,
+        b.status as billing_status, b.plan, coalesce(b.free_forever, false) as free_forever, b.access_until
       from neon_auth."user" u
+      left join billing b on b.user_id = u.id::text
       left join wa_sessions s on s.user_id = u.id::text
       left join send_limits l on l.user_id = u.id::text
       order by u."createdAt" desc`)
@@ -135,6 +164,10 @@ export async function adminUsers(db: Db): Promise<AdminUser[]> {
     sends7d: n(r.sends_7d),
     limitPerMinute: (r.per_minute as number | null) ?? null,
     limitPerDay: (r.per_day as number | null) ?? null,
+    billingStatus: (r.billing_status as string | null) ?? null,
+    plan: (r.plan as string | null) ?? null,
+    freeForever: Boolean(r.free_forever),
+    accessUntil: iso(r.access_until),
   }));
 }
 

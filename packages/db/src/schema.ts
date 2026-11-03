@@ -253,3 +253,55 @@ export const sendCounts = pgTable(
   },
   (t) => [primaryKey({ columns: [t.sessionId, t.day] })],
 );
+
+/**
+ * Plan and access per user. Access lasts until `access_until`, kept up to date by billing.ts:
+ * the later of the trial end and the paid period, plus referral bonus days; `free_forever` users
+ * (set on the admin page) never expire. The worker only reads this table.
+ */
+export const billing = pgTable(
+  "billing",
+  {
+    userId: text("user_id").primaryKey(),
+    // trial | active | past_due | canceled | free
+    status: text("status").notNull().default("trial"),
+    plan: text("plan"),
+    trialEndsAt: timestamp("trial_ends_at", { withTimezone: true }).notNull(),
+    paidUntil: timestamp("paid_until", { withTimezone: true }),
+    bonusDays: integer("bonus_days").notNull().default(0),
+    freeForever: boolean("free_forever").notNull().default(false),
+    accessUntil: timestamp("access_until", { withTimezone: true }),
+    referralCode: text("referral_code").notNull(),
+    referredBy: text("referred_by"),
+    asaasCustomerId: text("asaas_customer_id"),
+    asaasSubscriptionId: text("asaas_subscription_id"),
+    asaasCheckoutId: text("asaas_checkout_id"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("billing_referral_code_idx").on(t.referralCode),
+    index("billing_subscription_idx").on(t.asaasSubscriptionId),
+    index("billing_checkout_idx").on(t.asaasCheckoutId),
+  ],
+);
+
+/** Referral rewards, one per referred user; `wa_jid` keeps one WhatsApp number from paying out twice. */
+export const referrals = pgTable(
+  "referrals",
+  {
+    referredUserId: text("referred_user_id").primaryKey(),
+    referrerUserId: text("referrer_user_id").notNull(),
+    waJid: text("wa_jid"),
+    rewardedAt: timestamp("rewarded_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("referrals_referrer_idx").on(t.referrerUserId), uniqueIndex("referrals_wa_jid_idx").on(t.waJid)],
+);
+
+/** Asaas webhook events already processed (delivery is at-least-once). */
+export const billingEvents = pgTable("billing_events", {
+  id: text("id").primaryKey(),
+  event: text("event").notNull(),
+  receivedAt: timestamp("received_at", { withTimezone: true }).notNull().defaultNow(),
+});

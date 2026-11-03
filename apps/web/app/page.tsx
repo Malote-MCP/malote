@@ -22,6 +22,7 @@ const questions = [
   { q: "É uma integração oficial do WhatsApp?", a: "Não. O Malote usa uma biblioteca não oficial para funcionar como aparelho vinculado. Não é afiliado ao WhatsApp, à Meta ou à Anthropic. O uso pode contrariar os termos do WhatsApp e resultar em bloqueio da conta." },
   { q: "O que fica armazenado?", a: "O histórico sincronizado e as mídias baixadas. Mensagens, nomes e arquivos no formato cifrado usam chaves por conta. Metadados e dados legados têm condições diferentes, descritas na página Segurança. O conteúdo consultado pelo seu assistente também segue as regras do provedor dele." },
   { q: "O assistente pode enviar mensagens?", a: "Sim. O token permite ler e enviar mensagens; não há modo somente leitura. A ferramenta orienta o assistente a confirmar envios, mas não existe aprovação obrigatória no painel. Você pode revogar o token ou desconectar o WhatsApp a qualquer momento." },
+  { q: "Quanto custa?", a: "R$ 29,90 por mês ou R$ 299 por ano, com 15 dias de teste grátis sem cartão. O pagamento é feito por Pix ou cartão no Asaas. No cartão a renovação é automática; no Pix, o Asaas envia a cobrança por e-mail a cada período. Cancelar interrompe as renovações, e você usa até o fim do período pago." },
   { q: "E se eu perder todos os tokens?", a: "Guarde seu token como uma senha: ele também protege a chave do histórico. Sem uma credencial válida, é necessário criar outra chave e reinicializar o histórico armazenado. Não há recuperação dessa chave por e-mail." },
 ];
 
@@ -41,6 +42,7 @@ export default function Landing() {
           <nav className="site-nav" aria-label="Navegação principal">
             <a className="site-nav-section" href="#como-funciona">Como funciona</a>
             <a className="site-nav-section" href="/seguranca">Segurança</a>
+            <a className="site-nav-section" href="#preco">Preço</a>
             <a className="site-nav-section" href="#codigo">Código aberto</a>
             <Link className="site-login" href="/auth/sign-in">Entrar <Arrow diagonal /></Link>
           </nav>
@@ -114,7 +116,16 @@ export default function Landing() {
           </div>
         </section>
 
-        <section id="perguntas" className="site-container site-section site-faq" aria-labelledby="perguntas-title"><div><p className="site-eyebrow">03 / ANTES DE CONECTAR</p><h2 id="perguntas-title">Perguntas<br />frequentes.</h2></div><div className="site-questions">{questions.map(item => <details key={item.q}><summary>{item.q}<span aria-hidden="true">+</span></summary><p>{item.a}</p></details>)}</div></section>
+        <section id="preco" className="site-container site-section" aria-labelledby="preco-title">
+          <div className="site-section-heading"><p className="site-eyebrow">03 / PREÇO</p><h2 id="preco-title">Um plano só.<br />15 dias para testar.</h2><p>Tudo liberado desde o primeiro dia, sem cartão para começar. Pague com Pix ou cartão pelo Asaas e cancele quando quiser. Indicou alguém que conectou o WhatsApp? Você ganha mais 15 dias.</p></div>
+          <div className="site-pricing">
+            <div><span>Mensal</span><strong>R$ 29,90</strong><p>por mês</p></div>
+            <div><span>Anual</span><strong>R$ 299</strong><p>por ano · 2 meses grátis</p></div>
+            <Link className="site-button" href="/auth/sign-up">Começar o teste grátis <Arrow diagonal /></Link>
+          </div>
+        </section>
+
+        <section id="perguntas" className="site-container site-section site-faq" aria-labelledby="perguntas-title"><div><p className="site-eyebrow">04 / ANTES DE CONECTAR</p><h2 id="perguntas-title">Perguntas<br />frequentes.</h2></div><div className="site-questions">{questions.map(item => <details key={item.q}><summary>{item.q}<span aria-hidden="true">+</span></summary><p>{item.a}</p></details>)}</div></section>
 
         <section className="site-cta"><div className="site-container"><p className="site-eyebrow">MALOTE / WHATSAPP VIA MCP</p><h2>Pronto para conectar?</h2><Link className="site-button" href="/auth/sign-up">Criar minha conta <Arrow diagonal /></Link></div></section>
       </main>

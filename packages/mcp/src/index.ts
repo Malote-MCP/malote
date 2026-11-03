@@ -3,6 +3,7 @@
  * queue) and the enclave (which talks to its in-process WhatsApp sessions directly).
  */
 import {
+  hasAccess,
   deleteCommand,
   enqueueCommand,
   getMessage,
@@ -87,6 +88,9 @@ export function registerTools(server: McpServer, env: ToolEnv, caller: (ctx: unk
   async function sessionFor(ctx: unknown) {
     const c = caller(ctx);
     if (!c) throw new Error("Não autenticado.");
+    if (!(await hasAccess(db, c.userId))) {
+      throw new Error(`O período de teste ou a assinatura do Malote terminou. Assine em ${env.panelUrl} para continuar usando.`);
+    }
     const session = await getSessionByUserId(db, c.userId);
     if (!session) throw new Error(`Nenhum WhatsApp conectado. Conecte em ${env.panelUrl}.`);
     const opener = await loadOpener(db, session, c.privateKey);

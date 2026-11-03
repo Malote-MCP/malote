@@ -9,6 +9,7 @@ import {
 } from "@malote/db";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { FreeToggle } from "@/components/admin-billing";
 import { LimitsForm } from "@/components/admin-limits";
 import { Logo } from "@/components/logo";
 import { currentAdmin } from "@/lib/admin";
@@ -74,6 +75,14 @@ export default async function AdminPage() {
         </p>
 
         <section className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <Stat
+            label="Assinantes"
+            value={num(o.billing.paying)}
+            hint={`${num(o.billing.monthly)} mensais · ${num(o.billing.yearly)} anuais`}
+          />
+          <Stat label="Receita mensal (MRR)" value={o.billing.mrr.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} hint="anual dividido por 12" />
+          <Stat label="Em teste" value={num(o.billing.trial)} hint={`${num(o.billing.expired)} com acesso vencido`} />
+          <Stat label="Grátis para sempre" value={num(o.billing.free)} />
           <Stat label="Usuários" value={num(o.users)} hint={`+${num(o.usersLast7d)} em 7 dias · +${num(o.usersLast30d)} em 30`} />
           <Stat label="WhatsApp conectado" value={num(connected)} hint={`${num(o.sessionsEnabled)} com conexão ligada`} />
           <Stat label="Tokens ativos" value={num(o.activeTokens)} hint={`${num(o.tokensUsed24h)} usados em 24 h · ${num(o.tokensUsed7d)} em 7 d`} />
@@ -152,6 +161,7 @@ export default async function AdminPage() {
                   <th className="py-2 pr-3 font-medium">Visto</th>
                   <th className="py-2 pr-3 font-medium">Tokens</th>
                   <th className="py-2 pr-3 font-medium">Último uso</th>
+                  <th className="py-2 pr-3 font-medium">Plano</th>
                   <th className="py-2 pr-3 text-right font-medium">Envios hoje / 7d</th>
                   <th className="py-2 font-medium">Limite próprio</th>
                 </tr>
@@ -177,6 +187,20 @@ export default async function AdminPage() {
                     <td className="py-2 pr-3 text-ink-3">{when(u.lastSeenAt)}</td>
                     <td className="py-2 pr-3 tabular-nums">{u.activeTokens}</td>
                     <td className="py-2 pr-3 text-ink-3">{when(u.tokenLastUsedAt)}</td>
+                    <td className="py-2 pr-3">
+                      <span className="block text-xs">
+                        {u.freeForever
+                          ? "Grátis"
+                          : u.billingStatus === "active"
+                            ? `Assinante ${u.plan === "yearly" ? "anual" : "mensal"}`
+                            : u.accessUntil && new Date(u.accessUntil) > new Date()
+                              ? `${u.billingStatus === "trial" ? "Teste" : "Acesso"} até ${new Date(u.accessUntil).toLocaleDateString("pt-BR")}`
+                              : u.billingStatus
+                                ? "Vencido"
+                                : "—"}
+                      </span>
+                      <FreeToggle userId={u.id} freeForever={u.freeForever} />
+                    </td>
                     <td className="py-2 pr-3 text-right tabular-nums">
                       {u.sendsToday} / {u.sends7d}
                     </td>

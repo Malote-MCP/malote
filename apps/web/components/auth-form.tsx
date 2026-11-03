@@ -20,7 +20,11 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
 
   // Neon Auth sends OAuth failures back as ?error=<code>.
   useEffect(() => {
-    const code = new URLSearchParams(window.location.search).get("error");
+    const params = new URLSearchParams(window.location.search);
+    // Referral link (/auth/sign-up?ref=…): kept for 30 days and read when the account is first opened.
+    const ref = params.get("ref");
+    if (ref && /^[a-z0-9]{6,12}$/i.test(ref)) document.cookie = `malote_ref=${ref.toLowerCase()}; max-age=${30 * 86400}; path=/; samesite=lax; secure`;
+    const code = params.get("error");
     if (code) setError(oauthErrors[code] ?? `Não foi possível entrar com o Google (${code}). Tente de novo.`);
   }, []);
 
