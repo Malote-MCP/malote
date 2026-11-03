@@ -55,10 +55,11 @@ After the build succeeds, deploy the resulting immutable image digest (replace `
 
 ```sh
 gcloud run deploy malote-web --project malote-513023 --region us-east1 \
-  --image southamerica-east1-docker.pkg.dev/malote-513023/malote/web@<sha256:digest>
+  --image southamerica-east1-docker.pkg.dev/malote-513023/malote/web@<sha256:digest> \
+  --update-env-vars GIT_SHA=<full-commit-sha>
 ```
 
-Updating only `--image` preserves the service's existing environment, secrets and runtime service account.
+Update `GIT_SHA` alongside the image: an existing Cloud Run environment value overrides the image's built-in value. `--update-env-vars GIT_SHA=…` preserves the other environment variables, secrets and runtime service account; do not use `--set-env-vars`, which replaces the environment.
 Confirm the revision is ready, receives production traffic, and `https://malote.io/api/transparency` reports the expected web commit. Check the changed page on `https://malote.io`.
 
 ## Worker publication
