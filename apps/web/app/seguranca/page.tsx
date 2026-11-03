@@ -24,7 +24,6 @@ const contents = [
 export default function Security() {
   return (
     <div className="malote-site">
-      <GitHubStar />
       <a href="#conteudo" className="site-skip">Pular para o conteúdo</a>
       <header className="site-header">
         <div className="site-container site-header-inner">
@@ -128,7 +127,7 @@ export default function Security() {
           </div>
         </div>
       </main>
-      <footer className="site-container site-footer"><div className="site-footer-bottom"><span>Malote · Cora Assist Ltda · CNPJ 69.708.277/0001-70</span><span><Link href="/privacidade">Privacidade</Link> · <Link href="/termos">Termos de uso</Link> · <Link href="/">Voltar ao produto <span aria-hidden="true">↗</span></Link></span></div></footer>
+      <footer className="site-container site-footer"><div className="site-footer-bottom"><span>Malote · Cora Assist Ltda · CNPJ 69.708.277/0001-70</span><span><Link href="/privacidade">Privacidade</Link> · <Link href="/termos">Termos de uso</Link> · <Link href="/">Voltar ao produto <span aria-hidden="true">↗</span></Link></span><GitHubStar /></div></footer>
     </div>
   );
 }

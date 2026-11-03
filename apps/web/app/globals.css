@@ -4,15 +4,15 @@
 @import "./trust.css";
 
 @theme {
-  --color-paper: #f6f2ea;
-  --color-paper-2: #ede7db;
-  --color-ink: #1d1b16;
-  --color-ink-2: #4a463d;
-  --color-ink-3: #7a7466;
-  --color-line: #d9d1c1;
+  --color-paper: #f8faf9;
+  --color-paper-2: #edf2ef;
+  --color-ink: #182e2d;
+  --color-ink-2: #53645f;
+  --color-ink-3: #718079;
+  --color-line: #dce4e0;
   --color-moss: #2f5d46;
   --color-moss-2: #24493a;
-  --color-moss-soft: #dfe8df;
+  --color-moss-soft: #e6eee8;
   --color-clay: #b4552d;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-fraunces), ui-serif, Georgia, serif;

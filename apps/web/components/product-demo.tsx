@@ -50,7 +50,7 @@ function IllustrativeQr() {
 
 export function ProductDemo() {
   const root = useRef<HTMLDivElement>(null);
-  const [frame, setFrame] = useState(0);
+  const [frame, setFrame] = useState(8);
   const [playing, setPlaying] = useState(true);
   const [automatic, setAutomatic] = useState(true);
   const [inView, setInView] = useState(false);
