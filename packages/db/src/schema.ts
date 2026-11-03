@@ -227,3 +227,29 @@ export const termsAcceptances = pgTable(
   },
   (t) => [uniqueIndex("terms_acceptances_user_version_idx").on(t.userId, t.termsVersion, t.privacyVersion)],
 );
+
+/**
+ * Send limits set from the admin page. `user_id = '*'` is the default for everyone; any other row
+ * overrides it for that user. Null keeps the default. The worker clamps every value to hard caps
+ * fixed in its image (apps/worker/src/policy.ts), so the operator can lower limits but never lift
+ * them past what the audited code allows.
+ */
+export const sendLimits = pgTable("send_limits", {
+  userId: text("user_id").primaryKey(),
+  perMinute: integer("per_minute"),
+  perDay: integer("per_day"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Messages sent through Malote per session and day (counts only; no content, no recipient). */
+export const sendCounts = pgTable(
+  "send_counts",
+  {
+    sessionId: uuid("session_id")
+      .notNull()
+      .references(() => waSessions.id, { onDelete: "cascade" }),
+    day: text("day").notNull(),
+    count: integer("count").notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.sessionId, t.day] })],
+);

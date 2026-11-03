@@ -1,6 +1,9 @@
 import {
   encEpochs,
   getChat,
+  getSendLimits,
+  recordSendCount,
+  type SendLimits,
   mediaFiles,
   newEpoch,
   Sealer,
@@ -55,6 +58,7 @@ export class SessionRunner {
   private recentSent = new Map<string, WAMessage>();
   private namedGroups = new Set<string>();
   private sealerCache: Sealer | null = null;
+  private limitsCache: { at: number; limits: SendLimits } | null = null;
   private log: Logger;
 
   constructor(
@@ -76,6 +80,19 @@ export class SessionRunner {
       .update(waSessions)
       .set({ ...values, updatedAt: new Date() })
       .where(eq(waSessions.id, this.session.id));
+  }
+
+  /** Limits set on the admin page, re-read at most every 30 s. A read failure keeps the defaults. */
+  private async sendLimits(): Promise<SendLimits | undefined> {
+    if (this.limitsCache && Date.now() - this.limitsCache.at < 30_000) return this.limitsCache.limits;
+    try {
+      const limits = await getSendLimits(this.db, this.session.userId);
+      this.limitsCache = { at: Date.now(), limits };
+      return limits;
+    } catch (e) {
+      this.log.warn({ err: (e as Error).message }, "could not read send limits");
+      return this.limitsCache?.limits;
+    }
   }
 
   /** Encrypts to the user's public key; null until the user has created a key (then nothing is stored). */
@@ -303,18 +320,16 @@ export class SessionRunner {
   private async deliver(jid: string, content: AnyMessageContent, opts: { quoted?: WAMessage } = {}) {
     const sock = this.requireSock();
     const chatJid = this.resolveJid(jid);
-    if (!this.isSelf(chatJid)) {
-      const known = await getChat(this.db, this.id, chatJid);
-      await checkSendAllowed(this.id, { knownChat: !!known });
-    } else {
-      await checkSendAllowed(this.id, { knownChat: true });
-    }
+    const limits = await this.sendLimits();
+    const knownChat = this.isSelf(chatJid) || !!(await getChat(this.db, this.id, chatJid));
+    await checkSendAllowed(this.id, { knownChat, limits });
     // Behave like a person: show "typing…" briefly before sending.
     await sock.sendPresenceUpdate("composing", chatJid).catch(() => {});
     await new Promise((r) => setTimeout(r, 800 + Math.random() * 1200));
     const sent = await sock.sendMessage(chatJid, content, opts.quoted ? { quoted: opts.quoted } : undefined);
     await sock.sendPresenceUpdate("paused", chatJid).catch(() => {});
     recordSend(this.id);
+    await recordSendCount(this.db, this.id).catch((e) => this.log.warn({ err: (e as Error).message }, "could not count send"));
     if (sent?.key.id) {
       this.recentSent.set(sent.key.id, sent);
       if (this.recentSent.size > 500) this.recentSent.delete(this.recentSent.keys().next().value!);
