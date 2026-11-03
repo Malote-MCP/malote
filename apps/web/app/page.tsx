@@ -4,12 +4,6 @@ import { ProductDemo } from "@/components/product-demo";
 import { repositoryUrl, transparencyUrl } from "@/lib/public-info";
 import { GitHubStar } from "@/components/github-star";
 
-const capabilities = [
-  { n: "01", title: "Encontre o que ficou na conversa.", body: "Busque mensagens, contatos e grupos. Consulte o histórico disponível para recuperar um prazo, uma decisão ou uma informação.", example: "Encontre o prazo de entrega que a Ana passou no grupo do projeto." },
-  { n: "02", title: "Recupere o arquivo certo.", body: "Localize e baixe fotos, vídeos, áudios e documentos recebidos. Reenvie arquivos para uma conversa existente ou para você mesmo.", example: "Ache o PDF da proposta que o Rafael enviou e me reenvie." },
-  { n: "03", title: "Dê continuidade ao trabalho.", body: "Use o contexto das mensagens para preparar resumos e respostas no seu assistente. O Malote oferece as ferramentas de consulta e envio.", example: "Leia as mensagens do projeto e organize as pendências da semana." },
-];
-
 const steps = [
   { title: "Crie sua conta", body: "Acesse o painel com Google ou e-mail e senha. É por lá que você gerencia sua conexão e seus tokens de acesso." },
   { title: "Vincule seu WhatsApp", body: "Primeiro, gere seu token no painel. Depois escaneie o QR code em Aparelhos conectados, no WhatsApp do celular." },
@@ -48,10 +42,9 @@ export default function Landing() {
         <div className="site-container site-header-inner">
           <Logo />
           <nav className="site-nav" aria-label="Navegação principal">
-            <a className="site-nav-section" href="#produto">O produto</a>
             <a className="site-nav-section" href="#como-funciona">Como funciona</a>
             <a className="site-nav-section" href="#seguranca">Segurança</a>
-            <a className="site-nav-section" href="#codigo">Código e transparência</a>
+            <a className="site-nav-section" href="#codigo">Código aberto</a>
             <Link className="site-login" href="/auth/sign-in">Entrar <Arrow diagonal /></Link>
           </nav>
         </div>
@@ -75,13 +68,8 @@ export default function Landing() {
 
         <div className="site-facts"><div className="site-container site-facts-inner"><p><strong>Conta pessoal</strong><span>Conexão por QR code</span></p><p><strong>Protocolo MCP</strong><span>Claude Desktop, Code e clientes compatíveis</span></p><p><strong>Acesso revogável</strong><span>Tokens gerenciados no painel</span></p></div></div>
 
-        <section id="produto" className="site-container site-section" aria-labelledby="produto-title">
-          <div className="site-section-heading"><p className="site-eyebrow">01 / O PRODUTO</p><h2 id="produto-title">O que chega pelo WhatsApp<br />também faz parte do trabalho.</h2><p>Propostas, decisões e arquivos ficam espalhados em conversas. O Malote torna esse conteúdo acessível às ferramentas que você já usa.</p></div>
-          <div className="site-capabilities">{capabilities.map(item => <article key={item.n}><span className="site-index">{item.n} /</span><h3>{item.title}</h3><p>{item.body}</p><blockquote><span>UM PEDIDO POSSÍVEL</span>“{item.example}”</blockquote></article>)}</div>
-        </section>
-
         <section id="como-funciona" className="site-connection" aria-labelledby="conexao-title"><div className="site-container site-section">
-          <div className="site-section-heading"><p className="site-eyebrow">02 / A CONEXÃO</p><h2 id="conexao-title">Do celular ao assistente,<br />em três etapas.</h2><p>Você precisa de uma conta de WhatsApp e de um cliente compatível com MCP. A configuração da conexão fica no painel.</p></div>
+          <div className="site-section-heading"><p className="site-eyebrow">01 / A CONEXÃO</p><h2 id="conexao-title">Do celular ao assistente,<br />em três etapas.</h2><p>Você precisa de uma conta de WhatsApp e de um cliente compatível com MCP. A configuração da conexão fica no painel.</p></div>
           <ol className="site-steps">{steps.map((step, i) => <li key={step.title}><span className="site-step-number">0{i + 1}</span><h3>{step.title}</h3><p>{step.body}</p></li>)}</ol>
           <div className="site-protocol"><p><strong>Uma ponte entre ferramentas.</strong> O Malote sincroniza e disponibiliza o conteúdo. Seu assistente interpreta o pedido e escolhe quais ferramentas usar.</p><span>WhatsApp <Arrow /> Malote <Arrow /> MCP</span></div>
         </div></section>
@@ -89,7 +77,7 @@ export default function Landing() {
 
         <section id="seguranca" className="site-container site-section site-security" aria-labelledby="seguranca-title">
           <div className="site-security-intro">
-            <p className="site-eyebrow">03 / ACESSO E SEGURANÇA</p>
+            <p className="site-eyebrow">02 / ACESSO E SEGURANÇA</p>
             <h2 id="seguranca-title">Seu histórico cifrado.<br />Seu acesso, revogável.</h2>
             <p>A proteção vai além da conexão com o WhatsApp. O conteúdo gravado no formato cifrado usa chaves por conta, e o token do seu assistente também protege o acesso à chave privada.</p>
             <Link className="site-text-link" href="/seguranca">Conheça a arquitetura e seus limites <Arrow diagonal /></Link>
@@ -105,28 +93,28 @@ export default function Landing() {
         <section id="codigo" className="site-transparency" aria-labelledby="codigo-title">
           <div className="site-container site-section site-transparency-grid">
             <div>
-              <p className="site-eyebrow">04 / CÓDIGO E TRANSPARÊNCIA</p>
-              <h2 id="codigo-title">O que já pode<br />ser conferido.</h2>
-              <p>O código do Malote é público no GitHub, sob a licença Apache 2.0. Consulte a implementação, acompanhe as mudanças e contribua. Você também pode consultar a versão informada pelos servidores.</p>
+              <p className="site-eyebrow">03 / CÓDIGO ABERTO</p>
+              <h2 id="codigo-title">Audite.<br />Ou suba você mesmo.</h2>
+              <p>O código do Malote é público no GitHub, sob a licença Apache 2.0. Leia a implementação, reconstrua a imagem que roda no servidor e compare o resultado. Se preferir não depender de nós, rode sua própria instância.</p>
               <a className="site-text-link" href={repositoryUrl} target="_blank" rel="noopener noreferrer">Conheça o projeto no GitHub <Arrow diagonal /></a>
             </div>
             <div className="site-transparency-panel">
-              <div className="site-transparency-row"><div><strong>Proteção do histórico</strong><p>Mecanismo de criptografia e revogação de tokens.</p></div><span className="trust-status trust-status-ready">Implementado</span></div>
-              <div className="site-transparency-row"><div><strong>Versão do serviço hospedado</strong><p>Commit e imagem declarados pela infraestrutura.</p></div><a href={transparencyUrl} className="site-text-link">Consultar <Arrow diagonal /></a></div>
-              <div className="site-transparency-row"><div><strong>Código aberto no GitHub</strong><p>Repositório público · licença Apache 2.0.</p></div><a href={repositoryUrl} className="site-text-link" target="_blank" rel="noopener noreferrer">Ver código <Arrow diagonal /></a></div>
-              <p className="site-transparency-note">Consultar uma versão não é auditar o código executado. O endpoint é uma declaração do próprio servidor; a verificação da origem de uma imagem também depende do atestado correspondente.</p>
+              <div className="site-transparency-row"><div><strong>Audite o código</strong><p>Repositório público · licença Apache 2.0.</p></div><a href={repositoryUrl} className="site-text-link" target="_blank" rel="noopener noreferrer">Ver código <Arrow diagonal /></a></div>
+              <div className="site-transparency-row"><div><strong>Reconstrua a imagem</strong><p>O mesmo commit gera o mesmo digest. Compare com a versão que o serviço informa.</p></div><a href={`${repositoryUrl}#imagem-do-worker-reproduzível`} className="site-text-link" target="_blank" rel="noopener noreferrer">Como fazer <Arrow diagonal /></a></div>
+              <div className="site-transparency-row"><div><strong>Suba sua própria instância</strong><p>Web, worker e banco Postgres, com o passo a passo no README.</p></div><a href={`${repositoryUrl}#rodando-localmente`} className="site-text-link" target="_blank" rel="noopener noreferrer">Passo a passo <Arrow diagonal /></a></div>
+              <p className="site-transparency-note">Commit e imagem do serviço hospedado: <a href={transparencyUrl} className="underline underline-offset-2">consultar</a>. A página <Link href="/seguranca" className="underline underline-offset-2">Segurança e transparência</Link> explica o que essa verificação prova e o que não prova.</p>
             </div>
           </div>
         </section>
 
-        <section id="ferramentas" className="site-tool-section"><div className="site-container site-section site-tools-grid"><div><p className="site-eyebrow">05 / PARA QUEM INTEGRA</p><h2>Oito ferramentas.<br />Um protocolo aberto.</h2><p>O MCP permite que clientes compatíveis consultem dados e executem ações. O painel fornece o endereço do servidor e as instruções para configurar seu token.</p><Link className="site-text-link" href="/auth/sign-in">Acessar a configuração <Arrow diagonal /></Link></div><dl className="site-tool-list">{tools.map(([name, desc]) => <div key={name}><dt><code>{name}</code></dt><dd>{desc}</dd></div>)}</dl></div></section>
+        <section id="ferramentas" className="site-tool-section"><div className="site-container site-section site-tools-grid"><div><p className="site-eyebrow">04 / PARA QUEM INTEGRA</p><h2>Oito ferramentas.<br />Um protocolo aberto.</h2><p>O MCP permite que clientes compatíveis consultem dados e executem ações. O painel fornece o endereço do servidor e as instruções para configurar seu token.</p><Link className="site-text-link" href="/auth/sign-in">Acessar a configuração <Arrow diagonal /></Link></div><dl className="site-tool-list">{tools.map(([name, desc]) => <div key={name}><dt><code>{name}</code></dt><dd>{desc}</dd></div>)}</dl></div></section>
 
-        <section id="perguntas" className="site-container site-section site-faq" aria-labelledby="perguntas-title"><div><p className="site-eyebrow">06 / ANTES DE CONECTAR</p><h2 id="perguntas-title">Perguntas<br />frequentes.</h2></div><div className="site-questions">{questions.map(item => <details key={item.q}><summary>{item.q}<span aria-hidden="true">+</span></summary><p>{item.a}</p></details>)}</div></section>
+        <section id="perguntas" className="site-container site-section site-faq" aria-labelledby="perguntas-title"><div><p className="site-eyebrow">05 / ANTES DE CONECTAR</p><h2 id="perguntas-title">Perguntas<br />frequentes.</h2></div><div className="site-questions">{questions.map(item => <details key={item.q}><summary>{item.q}<span aria-hidden="true">+</span></summary><p>{item.a}</p></details>)}</div></section>
 
         <section className="site-cta"><div className="site-container"><p className="site-eyebrow">MALOTE / WHATSAPP VIA MCP</p><h2>Traga o contexto das conversas<br />para o seu próximo passo.</h2><Link className="site-button" href="/auth/sign-up">Criar minha conta <Arrow diagonal /></Link></div></section>
       </main>
 
-      <footer className="site-container site-footer"><div className="site-footer-top"><Logo /><div className="site-footer-company"><p>Conexão entre seu WhatsApp<br />e assistentes compatíveis com MCP.</p><p>Operado por Cora Assist Ltda<br />CNPJ 69.708.277/0001-70</p><a href="mailto:contato@coraassist.com">contato@coraassist.com</a></div><nav aria-label="Navegação do rodapé"><a href="#produto">Produto</a><Link href="/seguranca">Segurança e transparência</Link><Link href="/privacidade">Privacidade</Link><Link href="/termos">Termos de uso</Link><a href="mailto:contato@coraassist.com">Contato</a><Link href="/auth/sign-in">Acessar painel <Arrow diagonal /></Link></nav></div><div className="site-footer-bottom"><span>© {new Date().getFullYear()} Malote</span><p>Serviço independente. Sem afiliação com WhatsApp, Meta ou Anthropic.</p></div></footer>
+      <footer className="site-container site-footer"><div className="site-footer-top"><Logo /><div className="site-footer-company"><p>Conexão entre seu WhatsApp<br />e assistentes compatíveis com MCP.</p><p>Operado por Cora Assist Ltda<br />CNPJ 69.708.277/0001-70</p><a href="mailto:contato@coraassist.com">contato@coraassist.com</a></div><nav aria-label="Navegação do rodapé"><a href="#como-funciona">Como funciona</a><Link href="/seguranca">Segurança e transparência</Link><Link href="/privacidade">Privacidade</Link><Link href="/termos">Termos de uso</Link><a href="mailto:contato@coraassist.com">Contato</a><Link href="/auth/sign-in">Acessar painel <Arrow diagonal /></Link></nav></div><div className="site-footer-bottom"><span>© {new Date().getFullYear()} Malote</span><p>Serviço independente. Sem afiliação com WhatsApp, Meta ou Anthropic.</p></div></footer>
     </div>
   );
 }
