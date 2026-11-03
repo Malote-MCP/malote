@@ -3,7 +3,8 @@
  * `$aact_hmlg_`, production keys with `$aact_prod_`. Card and Pix data are typed on Asaas' own
  * checkout page; this server never sees them.
  */
-import { PLANS, type PlanId } from "@malote/db";
+import { billing, PLANS, type Db, type PlanId } from "@malote/db";
+import { eq } from "drizzle-orm";
 
 const key = () => {
   const k = process.env.ASAAS_API_KEY;
@@ -94,3 +95,19 @@ export async function cancelSubscription(id: string) {
 }
 
 export const planOfCycle = (cycle: string | undefined): PlanId => (cycle === "YEARLY" ? "yearly" : "monthly");
+
+/**
+ * Cancels the user's Asaas renewal before the account is deleted, so a deleted account is never
+ * charged again. Returns false when Asaas could not be reached; the caller must not delete then.
+ */
+export async function cancelRenewalBeforeDelete(db: Db, userId: string) {
+  const [b] = await db.select({ sub: billing.asaasSubscriptionId }).from(billing).where(eq(billing.userId, userId));
+  if (!b?.sub || !asaasConfigured()) return true;
+  try {
+    await cancelSubscription(b.sub);
+    return true;
+  } catch (err) {
+    console.error("cancel subscription on account delete", (err as Error).message);
+    return false;
+  }
+}

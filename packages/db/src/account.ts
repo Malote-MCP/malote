@@ -3,7 +3,7 @@ import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { enqueueCommand, waitForCommand } from "./commands.ts";
 import { getSessionByUserId } from "./queries.ts";
 import * as schema from "./schema.ts";
-import { apiTokens, billing, termsAcceptances, waSessions } from "./schema.ts";
+import { apiTokens, billing, sendLimits, termsAcceptances, waSessions } from "./schema.ts";
 
 type Db = NodePgDatabase<typeof schema>;
 
@@ -43,6 +43,7 @@ export async function deleteAccount(db: Db, userId: string) {
   }
   await db.transaction(async (tx) => {
     await tx.delete(waSessions).where(eq(waSessions.userId, userId));
+    await tx.delete(sendLimits).where(eq(sendLimits.userId, userId));
     await tx.delete(apiTokens).where(eq(apiTokens.userId, userId));
     await tx.delete(termsAcceptances).where(eq(termsAcceptances.userId, userId));
     // Plan state goes with the account. Referral rows stay: they only hold a hash of the phone
