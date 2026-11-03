@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { ProductDemo } from "@/components/product-demo";
 import { repositoryUrl, transparencyUrl } from "@/lib/public-info";
+import { VerificationBadge } from "@/components/verification-badge";
 import { GitHubStar } from "@/components/github-star";
 
 const steps = [
@@ -41,6 +42,7 @@ export default function Landing() {
       <header className="site-header">
         <div className="site-container site-header-inner">
           <Logo />
+          <VerificationBadge placement="header" />
           <nav className="site-nav" aria-label="Navegação principal">
             <a className="site-nav-section" href="#como-funciona">Como funciona</a>
             <a className="site-nav-section" href="#seguranca">Segurança</a>
@@ -99,7 +101,7 @@ export default function Landing() {
             </div>
 
             <figure className="audit-map" aria-labelledby="audit-map-title">
-              <div className="audit-map-heading"><div><p className="site-eyebrow">ARQUITETURA / FLUXO DAS MENSAGENS</p><h3 id="audit-map-title">Uma ponte protegida, de ponta a ponta.</h3></div><span className="audit-map-tag">Código aberto · Apache 2.0</span></div>
+              <div className="audit-map-heading"><div><p className="site-eyebrow">ARQUITETURA / FLUXO DAS MENSAGENS</p><h3 id="audit-map-title">Uma ponte protegida, de ponta a ponta.</h3></div><VerificationBadge placement="diagram" /></div>
               <div className="audit-flow">
                 <div className="audit-endpoint"><span className="audit-icon" aria-hidden="true">▤</span><strong>Seu WhatsApp</strong><p>Suas conversas<br />e arquivos.</p></div>
                 <div className="audit-connector"><span>mensagens</span><i aria-hidden="true">→</i></div>
