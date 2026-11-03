@@ -3,7 +3,7 @@ import type { LegalDocument } from "./types";
 
 export const privacidade: LegalDocument = {
   "title": "POLÍTICA DE PRIVACIDADE DO MALOTE",
-  "updated": "Última atualização: 02 de novembro de 2026.",
+  "updated": "Última atualização: 3 de novembro de 2026.",
   "sections": [
     {
       "id": "sobre-esta-politica",
@@ -229,6 +229,7 @@ export const privacidade: LegalDocument = {
             "WhatsApp e Meta: para manter a conexão com a Conta Vinculada e enviar mensagens e arquivos, sujeitos às regras próprias desses serviços.",
             "Fornecedores de infraestrutura: Google Cloud, para hospedagem dos servidores, no Brasil (conexão com o WhatsApp e atendimento aos Clientes MCP) e nos Estados Unidos (site e painel), e Neon, para banco de dados e autenticação, no Brasil, que tratam os dados exclusivamente para viabilizar o serviço.",
             "Google: quando o Usuário opta por entrar com sua conta Google, para fins de autenticação.",
+            "Asaas (Asaas Gestão Financeira Instituição de Pagamento S.A.): para processar os pagamentos dos planos por Pix ou cartão de crédito, no Brasil. O Asaas recebe diretamente do Usuário os dados de pagamento e atua também como controlador desses dados, conforme sua própria política de privacidade.",
             "Clientes MCP: os Clientes MCP configurados pelo Usuário recebem, mediante Token MCP válido, o conteúdo solicitado em nome do Usuário, e podem repassá-lo aos respectivos fornecedores de inteligência artificial, conforme os termos aplicáveis entre eles e o Usuário.",
             "Autoridades e terceiros legitimados: quando houver obrigação legal, ordem de autoridade competente ou necessidade de exercício regular de direitos."
           ]
@@ -416,7 +417,19 @@ export const privacidade: LegalDocument = {
       "blocks": [
         {
           "type": "p",
-          "text": "15.1. O MALOTE é atualmente oferecido sem custo e não coleta dados de pagamento. Caso passe a oferecer planos pagos, esta Política será atualizada para informar os dados tratados e os fornecedores envolvidos antes do início da cobrança."
+          "text": "15.1. O MALOTE é oferecido em planos pagos, após um período de teste gratuito, conforme os Termos de Uso. Ao contratar um plano, o Usuário informa nome, e-mail, CPF ou CNPJ e os dados de pagamento diretamente na página do Asaas. Os dados do cartão de crédito são tratados exclusivamente pelo Asaas; o MALOTE não os recebe nem os armazena."
+        },
+        {
+          "type": "p",
+          "text": "15.2. O MALOTE recebe do Asaas e armazena apenas o necessário para controlar o acesso contratado: identificadores do cliente, da assinatura e da sessão de pagamento no Asaas, o plano, a situação da assinatura, as datas de vencimento e de validade do acesso e os identificadores dos avisos de pagamento já processados. A base legal é a execução do contrato (art. 7º, V, da LGPD)."
+        },
+        {
+          "type": "p",
+          "text": "15.3. Para o programa de indicação, o MALOTE registra qual conta indicou qual e, quando a conta indicada conecta um número de WhatsApp, um resumo criptográfico (hash) desse número, que impede que o mesmo número gere bônus mais de uma vez. O número em si não é guardado nesse registro. A base legal é o legítimo interesse na prevenção a fraudes (art. 7º, IX, da LGPD)."
+        },
+        {
+          "type": "p",
+          "text": "15.4. Os dados do plano são eliminados com a exclusão da conta, que também cancela a renovação no Asaas. O registro de indicação, que contém apenas o hash do número e os identificadores das contas, é conservado após a exclusão para a finalidade descrita na cláusula 15.3. Registros de pagamento e documentos fiscais são conservados pelo Asaas e pela CORA pelos prazos exigidos pela legislação aplicável."
         }
       ]
     },

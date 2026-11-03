@@ -3,7 +3,7 @@ import type { LegalDocument } from "./types";
 
 export const termos: LegalDocument = {
   "title": "TERMOS DE USO DO MALOTE",
-  "updated": "Última atualização: 1 de novembro de 2026.",
+  "updated": "Última atualização: 3 de novembro de 2026.",
   "sections": [
     {
       "id": "quem-somos",
@@ -63,7 +63,7 @@ export const termos: LegalDocument = {
         },
         {
           "type": "p",
-          "text": "2.7. O MALOTE é atualmente oferecido sem custo. A CORA poderá criar planos pagos ou alterar as funcionalidades disponíveis sem custo, mediante aviso ao Usuário com pelo menos 7 dias corridos de antecedência. Nenhuma cobrança será realizada sem a contratação expressa de plano pago. Caso não o contrate, o Usuário poderá continuar utilizando as funcionalidades que permanecerem sem custo ou excluir sua conta."
+          "text": "2.7. O uso do MALOTE é remunerado após um período de teste gratuito, nas condições da cláusula 13. Nenhuma cobrança será realizada sem que o Usuário contrate expressamente um plano."
         },
         {
           "type": "p",
@@ -401,19 +401,58 @@ export const termos: LegalDocument = {
     {
       "id": "condicoes-economicas-e-cobranca",
       "number": "13",
-      "title": "Condições Econômicas e Cobrança",
+      "title": "Planos, Teste Gratuito e Cobrança",
       "blocks": [
         {
           "type": "p",
-          "text": "13.1. O MALOTE é atualmente oferecido sem custo, e o cadastro não gera obrigação de pagamento."
+          "text": "13.1. O MALOTE é oferecido nos seguintes planos, com acesso a todas as funcionalidades:"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Plano Mensal: R$ 29,90 (vinte e nove reais e noventa centavos) por mês;",
+            "Plano Anual: R$ 299,00 (duzentos e noventa e nove reais) por ano."
+          ]
         },
         {
           "type": "p",
-          "text": "13.2. A CORA poderá criar planos pagos ou alterar as funcionalidades disponíveis sem custo, mediante aviso ao Usuário com pelo menos 7 dias corridos de antecedência. Nenhuma cobrança será realizada sem a contratação expressa de plano pago. Caso não o contrate, o Usuário poderá continuar utilizando as funcionalidades que permanecerem sem custo ou excluir sua conta."
+          "text": "13.2. Os preços vigentes são exibidos no site e no Painel antes da contratação. Eventuais reajustes serão comunicados por e-mail ou pelo Painel com pelo menos 30 dias corridos de antecedência e só valerão a partir da renovação seguinte ao fim desse prazo. Caso não concorde, o Usuário poderá cancelar a renovação antes de o novo preço passar a valer."
         },
         {
           "type": "p",
-          "text": "13.3. Preço, tributos, periodicidade, formas de pagamento, renovação, reajuste, cancelamento e consequências do inadimplemento constarão das condições da oferta, apresentadas ao Usuário antes da contratação. Quanto a esses temas, as condições da oferta prevalecerão sobre estes Termos."
+          "text": "13.3. Cada nova conta recebe um período de teste gratuito de 15 dias corridos, contados da criação da conta, sem necessidade de cadastrar meio de pagamento. Contas criadas antes de 3 de novembro de 2026 recebem o mesmo período de 15 dias, contado a partir dessa data."
+        },
+        {
+          "type": "p",
+          "text": "13.4. Encerrado o teste, ou o período pago, sem a contratação ou a renovação de um plano, o acesso às Ferramentas pelos Clientes MCP é suspenso. A conta, a Conta Vinculada e o Conteúdo Sincronizado permanecem armazenados conforme a Política de Privacidade, e o acesso é restabelecido com a contratação de um plano."
+        },
+        {
+          "type": "p",
+          "text": "13.5. Os pagamentos são processados pelo Asaas (Asaas Gestão Financeira Instituição de Pagamento S.A.), por Pix ou cartão de crédito, em página do próprio Asaas. A CORA não recebe nem armazena os dados do cartão. O uso do Asaas está sujeito também às condições e à política de privacidade desse fornecedor."
+        },
+        {
+          "type": "p",
+          "text": "13.6. Os planos são renovados automaticamente ao fim de cada período, pelo mesmo prazo. No cartão de crédito, a cobrança é feita automaticamente na data de renovação. No Pix, o Asaas envia a cobrança ao e-mail do Usuário antes do vencimento. Quando o plano é contratado durante o teste ou durante um período já pago, a primeira cobrança ocorre ao fim desse período."
+        },
+        {
+          "type": "p",
+          "text": "13.7. O Usuário pode cancelar a renovação a qualquer tempo pelo Painel. O cancelamento interrompe as cobranças futuras, e o acesso continua até o fim do período já pago, sem reembolso proporcional, ressalvado o disposto na cláusula 13.8. A exclusão da conta também cancela a renovação."
+        },
+        {
+          "type": "p",
+          "text": "13.8. O Usuário consumidor pode desistir da contratação em até 7 dias corridos contados do primeiro pagamento, com a devolução integral do valor pago, nos termos do art. 49 do Código de Defesa do Consumidor. O pedido deve ser feito pelo e-mail contato@coraassist.com, e a devolução será feita pelo mesmo meio de pagamento utilizado, por intermédio do Asaas."
+        },
+        {
+          "type": "p",
+          "text": "13.9. Na falta de pagamento, o acesso é mantido por até 3 dias corridos após o vencimento. Após esse prazo, o acesso às Ferramentas é suspenso até a confirmação do pagamento. A CORA não cobra multa nem juros pelo atraso. Em caso de estorno ou contestação de pagamento, o período correspondente deixa de ser considerado pago."
+        },
+        {
+          "type": "p",
+          "text": "13.10. Programa de indicação: o Usuário recebe 15 dias adicionais de acesso para cada pessoa que criar uma conta pelo seu link de indicação e conectar ao MALOTE um número de WhatsApp que ainda não tenha gerado bônus de indicação e que não seja o do próprio Usuário. Os dias adicionais não têm valor monetário, não são transferíveis nem conversíveis em dinheiro e são acrescidos ao fim do período de acesso vigente. A CORA poderá cancelar bônus obtidos por fraude, por contas falsas ou em desacordo com estes Termos, e poderá alterar ou encerrar o programa mediante aviso, preservados os dias já concedidos."
+        },
+        {
+          "type": "p",
+          "text": "13.11. A CORA poderá, a seu critério, conceder acesso gratuito por prazo indeterminado a determinadas contas, sem que isso gere direito a outros Usuários. Esse acesso poderá ser revogado mediante aviso com pelo menos 15 dias corridos de antecedência."
         }
       ]
     },

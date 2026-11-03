@@ -3,13 +3,13 @@ import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { enqueueCommand, waitForCommand } from "./commands.ts";
 import { getSessionByUserId } from "./queries.ts";
 import * as schema from "./schema.ts";
-import { apiTokens, termsAcceptances, waSessions } from "./schema.ts";
+import { apiTokens, billing, termsAcceptances, waSessions } from "./schema.ts";
 
 type Db = NodePgDatabase<typeof schema>;
 
 /** Versions of the legal texts published at /termos and /privacidade. Bump when either changes. */
-export const TERMS_VERSION = "2026-11-01";
-export const PRIVACY_VERSION = "2026-11-02";
+export const TERMS_VERSION = "2026-11-03";
+export const PRIVACY_VERSION = "2026-11-03";
 
 export async function hasAcceptedCurrentTerms(db: Db, userId: string) {
   const rows = await db
@@ -45,6 +45,9 @@ export async function deleteAccount(db: Db, userId: string) {
     await tx.delete(waSessions).where(eq(waSessions.userId, userId));
     await tx.delete(apiTokens).where(eq(apiTokens.userId, userId));
     await tx.delete(termsAcceptances).where(eq(termsAcceptances.userId, userId));
+    // Plan state goes with the account. Referral rows stay: they only hold a hash of the phone
+    // number, which stops the same number from earning a referral bonus twice (Política 15).
+    await tx.delete(billing).where(eq(billing.userId, userId));
     // Neon Auth's own tables; sessions and linked Google accounts cascade from the user row.
     await tx.execute(sql`delete from neon_auth."user" where id = ${userId}`);
   });

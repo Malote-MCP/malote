@@ -2,7 +2,7 @@
  * Plans, trial, referrals and access. The web app writes here (sign-up, checkout, Asaas webhooks,
  * admin); the worker only calls hasAccess() before serving MCP.
  */
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import type { Db } from "./index.ts";
 import { billing, referrals, waSessions } from "./schema.ts";
@@ -85,6 +85,13 @@ export async function hasAccess(db: Db, userId: string) {
  * Pays out referrals whose referred user has connected a WhatsApp number. A number counts once,
  * and never the referrer's own: a fake e-mail is free, a real WhatsApp number is not.
  */
+/**
+ * Referrals keep only a hash of the phone number (no device suffix), so a number can be paid out once
+ * even after the referred account is deleted, without Malote keeping the number itself.
+ */
+export const referralNumberHash = (waJid: string) =>
+  createHash("sha256").update(`malote-referral:${waJid.split(/[:@]/)[0]}`).digest("hex");
+
 export async function rewardReferrals(db: Db, referrerUserId: string) {
   const [own] = await db.select({ waJid: waSessions.waJid }).from(waSessions).where(eq(waSessions.userId, referrerUserId));
   const pending = await db
@@ -94,10 +101,10 @@ export async function rewardReferrals(db: Db, referrerUserId: string) {
     .where(and(eq(referrals.referrerUserId, referrerUserId), isNull(referrals.rewardedAt), sql`${waSessions.waJid} is not null`));
   let rewarded = 0;
   for (const p of pending) {
-    if (!p.waJid || p.waJid === own?.waJid) continue;
+    if (!p.waJid || (own?.waJid && referralNumberHash(p.waJid) === referralNumberHash(own.waJid))) continue;
     const done = await db
       .update(referrals)
-      .set({ waJid: p.waJid, rewardedAt: new Date() })
+      .set({ waJid: referralNumberHash(p.waJid), rewardedAt: new Date() })
       .where(and(eq(referrals.referredUserId, p.referredUserId), isNull(referrals.rewardedAt)))
       .returning()
       .catch(() => []); // the number already paid out a referral (unique wa_jid)
