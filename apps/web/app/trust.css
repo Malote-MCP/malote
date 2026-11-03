@@ -88,3 +88,42 @@
 .site-github-star-count { min-width: 66px; font-variant-numeric: tabular-nums; }
 .trust-project-status > a { margin-top: 16px; }
 @media (max-width: 520px) { .site-github-star { right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); padding: 7px 13px; font-size: 23px; } .site-github-star-count { min-width: 58px; } }
+
+/* Seção 03 / Código aberto: caixa lacrada e caminho de auditoria */
+.site-audit-heading > p:last-child { max-width: 620px; }
+.site-audit-figure { margin: 48px 0 0; }
+.site-audit-figure svg { display: block; width: 100%; height: auto; color: var(--site-ink); }
+.site-audit-figure svg.site-audit-figure-tall { display: none; max-width: 440px; margin-inline: auto; }
+.site-audit-figure figcaption { margin-top: 18px; max-width: 720px; font-size: 12px; line-height: 1.8; color: var(--site-muted); }
+.site-audit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; margin-top: 56px; }
+.site-audit-grid h3 { font-size: 18px; letter-spacing: -.3px; }
+.site-audit-why dl { margin-top: 18px; }
+.site-audit-why dl > div { padding: 18px 0; border-top: 1px solid var(--site-line); }
+.site-audit-why dt { font-size: 13px; font-weight: 550; }
+.site-audit-why dd { margin: 6px 0 0; font-size: 13px; line-height: 1.75; color: var(--site-muted); }
+.site-audit-panel { align-self: start; }
+.site-audit-panel > h3 { padding-top: 22px; }
+.site-audit-steps { list-style: none; padding: 0; margin: 16px 0 0; }
+.site-audit-steps li { display: grid; grid-template-columns: 28px 1fr; gap: 14px; padding-block: 20px; border-top: 1px solid var(--site-line); }
+.site-audit-steps li > span { font-family: var(--font-mono); font-size: 12px; padding-top: 1px; }
+.site-audit-steps strong { display: block; font-size: 13px; font-weight: 550; }
+.site-audit-steps p { margin-top: 5px; font-size: 12px; line-height: 1.7; color: var(--site-muted); }
+.site-audit-steps .site-text-link { margin-top: 10px; font-size: 12px; }
+.site-audit-footer { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; margin-top: 48px; padding-top: 28px; border-top: 1px solid #c8d5c0; }
+.site-audit-selfhost strong { font-size: 13px; font-weight: 550; }
+.site-audit-selfhost p { margin-top: 6px; max-width: 440px; font-size: 13px; line-height: 1.75; color: var(--site-muted); }
+.site-audit-selfhost .site-text-link { display: flex; margin-top: 14px; }
+.site-audit-limits { border: 1px solid #c8d5c0; padding: 18px 20px; font-size: 12px; line-height: 1.75; }
+.site-audit-limits strong { display: block; margin-bottom: 8px; font-size: 12px; font-weight: 550; }
+.site-audit-limits ul { margin: 0; padding-left: 16px; color: var(--site-muted); }
+.site-audit-limits li + li { margin-top: 4px; }
+@media (max-width: 1000px) {
+  .site-audit-figure svg.site-audit-figure-wide { display: none; }
+  .site-audit-figure svg.site-audit-figure-tall { display: block; }
+  .site-audit-grid, .site-audit-footer { gap: 40px; }
+}
+@media (max-width: 720px) {
+  .site-audit-figure { margin-top: 36px; }
+  .site-audit-grid, .site-audit-footer { grid-template-columns: 1fr; gap: 32px; margin-top: 40px; }
+  .site-audit-grid h3 { font-size: 17px; }
+}
