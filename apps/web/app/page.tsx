@@ -29,8 +29,6 @@ const questions = [
   { q: "O assistente pode enviar mensagens?", a: "Sim. O token permite acesso às ferramentas de leitura e envio da sua conta; não há um modo de acesso somente para leitura. A ferramenta de envio de texto orienta o assistente a confirmar com você antes de enviar a outras pessoas, mas não existe uma etapa de aprovação obrigatória no painel. Configure e use seu assistente considerando esse acesso." },
 ];
 
-const auditDiagramLabel = "Diagrama: as mensagens do seu WhatsApp entram numa caixa lacrada, o worker do Malote rodando no Google Confidential Space com memória cifrada, e saem para o seu assistente via mcp.malote.io. O banco de dados fica fora da caixa e guarda só conteúdo cifrado. O operador fica fora da caixa, sem entrada: sem SSH, sem depuração. O cofre de chaves do Google só entrega as chaves para a imagem que está na lista pública. Caminho de verificação: código público no GitHub, build reproduzível, digest da imagem, atestado assinado pelo Google que cita o mesmo digest, conferido pelo seu navegador.";
-
 function Arrow({ diagonal = false }: { diagonal?: boolean }) {
   return <span aria-hidden="true">{diagonal ? "↗" : "→"}</span>;
 }
@@ -100,140 +98,34 @@ export default function Landing() {
               <p>Suas mensagens passam por um servidor nosso. Por isso ele roda numa caixa lacrada, sem porta de entrada nem para quem opera o Malote. E você não precisa acreditar na nossa palavra. Dá para conferir, com o código público e uma prova assinada pelo Google.</p>
             </div>
 
-            <figure className="site-audit-figure">
-              <svg className="site-audit-figure-wide" viewBox="0 0 960 652" role="img" aria-label={auditDiagramLabel} fill="none" stroke="currentColor" strokeWidth="1.25" fontFamily="inherit">
-                <defs><marker id="audit-arrow-w" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0.5 9 5 0 9.5" fill="none" stroke="currentColor" strokeWidth="1.25" /></marker></defs>
-                <g strokeLinecap="round" strokeLinejoin="round">
-                  {/* Cofre de chaves */}
-                  <rect x="330" y="8" width="300" height="48" />
-                  <line x1="480" y1="56" x2="480" y2="83" markerEnd="url(#audit-arrow-w)" />
-                  {/* Caixa lacrada */}
-                  <rect x="250" y="84" width="460" height="308" fill="var(--site-lime)" strokeWidth="1.5" />
-                  <g transform="translate(676 96)"><rect x="4" y="9" width="14" height="11" strokeWidth="1.5" /><path d="M7 9V6a4 4 0 0 1 8 0v3" strokeWidth="1.5" /></g>
-                  <rect x="330" y="140" width="300" height="72" strokeWidth="1.5" />
-                  <rect x="272" y="246" width="4" height="4" fill="currentColor" stroke="none" /><rect x="272" y="278" width="4" height="4" fill="currentColor" stroke="none" /><rect x="272" y="310" width="4" height="4" fill="currentColor" stroke="none" /><rect x="272" y="342" width="4" height="4" fill="currentColor" stroke="none" />
-                  {/* WhatsApp e assistente */}
-                  <rect x="24" y="140" width="160" height="72" />
-                  <line x1="184" y1="176" x2="329" y2="176" markerEnd="url(#audit-arrow-w)" />
-                  <rect x="776" y="140" width="160" height="72" />
-                  <line x1="630" y1="176" x2="775" y2="176" markerEnd="url(#audit-arrow-w)" />
-                  {/* Operador: sem entrada */}
-                  <rect x="24" y="300" width="160" height="72" />
-                  <line x1="184" y1="336" x2="232" y2="336" />
-                  <path d="M238 330l10 12M248 330l-10 12" strokeWidth="2" />
-                  {/* Banco */}
-                  <line x1="520" y1="392" x2="520" y2="455" markerEnd="url(#audit-arrow-w)" />
-                  <rect x="420" y="456" width="200" height="64" />
-                  {/* Atestado sai da caixa */}
-                  <line x1="668" y1="392" x2="668" y2="575" strokeDasharray="4 5" markerEnd="url(#audit-arrow-w)" />
-                  {/* Cadeia de verificação */}
-                  <rect x="24" y="576" width="160" height="64" /><line x1="184" y1="608" x2="211" y2="608" markerEnd="url(#audit-arrow-w)" />
-                  <rect x="212" y="576" width="160" height="64" /><line x1="372" y1="608" x2="399" y2="608" markerEnd="url(#audit-arrow-w)" />
-                  <rect x="400" y="576" width="160" height="64" /><line x1="560" y1="608" x2="587" y2="608" markerEnd="url(#audit-arrow-w)" />
-                  <rect x="588" y="576" width="160" height="64" /><line x1="748" y1="608" x2="775" y2="608" markerEnd="url(#audit-arrow-w)" />
-                  <rect x="776" y="576" width="160" height="64" fill="var(--site-lime)" strokeWidth="1.5" />
-                </g>
-                <g fill="currentColor" stroke="none" textAnchor="middle" fontSize="15" fontWeight="550">
-                  <text x="480" y="30">Cofre de chaves do Google</text>
-                  <text x="480" y="170" fontSize="16">Worker do Malote</text>
-                  <text x="104" y="170">Seu WhatsApp</text>
-                  <text x="856" y="170">Seu assistente</text>
-                  <text x="104" y="330">Operador (nós)</text>
-                  <text x="520" y="484">Banco de dados</text>
-                  <text x="104" y="604" fontSize="13">Código público</text>
-                  <text x="292" y="604" fontSize="13">Build reproduzível</text>
-                  <text x="480" y="604" fontSize="13">Digest da imagem</text>
-                  <text x="668" y="604" fontSize="13">Atestado do Google</text>
-                  <text x="856" y="604" fontSize="13">Seu navegador confere</text>
-                </g>
-                <g fill="var(--site-muted)" stroke="none" textAnchor="middle" fontSize="11.5">
-                  <text x="480" y="47">Secret Manager</text>
-                  <text x="480" y="195">recebe suas mensagens, cifra e responde</text>
-                  <text x="104" y="195">no celular</text>
-                  <text x="856" y="195">via mcp.malote.io</text>
-                  <text x="104" y="355">Cora Assist</text>
-                  <text x="104" y="392">sem entrada</text><text x="104" y="407">sem SSH, sem depuração</text>
-                  <text x="520" y="506">guarda só o que está cifrado</text>
-                  <text x="104" y="624">no GitHub, Apache 2.0</text>
-                  <text x="292" y="624">mesmo código, mesmo lacre</text>
-                  <text x="480" y="624">está na lista pública</text>
-                  <text x="668" y="624">assinado, cita esse digest</text>
-                  <text x="856" y="624">na página Segurança</text>
-                  <text x="217" y="160" fontSize="11">mensagens</text>
-                  <text x="508" y="430" textAnchor="end">só conteúdo cifrado</text><text x="508" y="445" textAnchor="end">X25519 + AES-256-GCM</text>
-                  <text x="680" y="478" textAnchor="start">a caixa emite</text><text x="680" y="493" textAnchor="start">o atestado</text>
-                  <text x="492" y="74" textAnchor="start" fontSize="12">só entrega as chaves para a imagem que está na lista pública</text>
-                </g>
-                <g fill="currentColor" stroke="none" fontSize="12.5">
-                  <text x="270" y="110" fontFamily="var(--font-mono)" fontSize="10.5" letterSpacing="1.2">CAIXA LACRADA · GOOGLE CONFIDENTIAL SPACE</text>
-                  <text x="284" y="252">Memória cifrada pelo próprio processador (AMD SEV).</text>
-                  <text x="284" y="284">A conexão segura (TLS) termina aqui dentro, não num proxy.</text>
-                  <text x="284" y="316">Sem SSH e sem modo de depuração: não há como entrar.</text>
-                  <text x="284" y="348">Só roda a imagem exata que o Google atesta pelo digest.</text>
-                  <text x="24" y="560" fontFamily="var(--font-mono)" fontSize="10" letterSpacing="1.5">COMO CONFERIR</text>
-                </g>
-              </svg>
-
-              <svg className="site-audit-figure-tall" viewBox="0 0 400 1026" role="img" aria-label={auditDiagramLabel} fill="none" stroke="currentColor" strokeWidth="1.25" fontFamily="inherit">
-                <defs><marker id="audit-arrow-t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0.5 9 5 0 9.5" fill="none" stroke="currentColor" strokeWidth="1.25" /></marker></defs>
-                <g strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="16" y="12" width="174" height="56" /><line x1="103" y1="68" x2="103" y2="107" markerEnd="url(#audit-arrow-t)" />
-                  <rect x="210" y="12" width="174" height="56" /><line x1="297" y1="68" x2="297" y2="107" markerEnd="url(#audit-arrow-t)" />
-                  <rect x="16" y="108" width="368" height="330" fill="var(--site-lime)" strokeWidth="1.5" />
-                  <g transform="translate(350 118)"><rect x="4" y="9" width="14" height="11" strokeWidth="1.5" /><path d="M7 9V6a4 4 0 0 1 8 0v3" strokeWidth="1.5" /></g>
-                  <rect x="60" y="152" width="280" height="64" strokeWidth="1.5" />
-                  <rect x="32" y="250" width="4" height="4" fill="currentColor" stroke="none" /><rect x="32" y="284" width="4" height="4" fill="currentColor" stroke="none" /><rect x="32" y="318" width="4" height="4" fill="currentColor" stroke="none" /><rect x="32" y="352" width="4" height="4" fill="currentColor" stroke="none" />
-                  <line x1="72" y1="508" x2="72" y2="456" /><path d="M67 441l10 10M77 441l-10 10" strokeWidth="2" />
-                  <line x1="200" y1="438" x2="200" y2="507" markerEnd="url(#audit-arrow-t)" />
-                  <line x1="328" y1="438" x2="328" y2="507" markerEnd="url(#audit-arrow-t)" />
-                  <rect x="16" y="508" width="112" height="60" /><rect x="144" y="508" width="112" height="60" /><rect x="272" y="508" width="112" height="60" />
-                  <rect x="60" y="676" width="280" height="48" /><line x1="200" y1="724" x2="200" y2="747" markerEnd="url(#audit-arrow-t)" />
-                  <rect x="60" y="748" width="280" height="48" /><line x1="200" y1="796" x2="200" y2="819" markerEnd="url(#audit-arrow-t)" />
-                  <rect x="60" y="820" width="280" height="48" /><line x1="200" y1="868" x2="200" y2="891" markerEnd="url(#audit-arrow-t)" />
-                  <rect x="60" y="892" width="280" height="48" /><line x1="200" y1="940" x2="200" y2="963" markerEnd="url(#audit-arrow-t)" />
-                  <rect x="60" y="964" width="280" height="48" fill="var(--site-lime)" strokeWidth="1.5" />
-                </g>
-                <g fill="currentColor" stroke="none" textAnchor="middle" fontSize="14" fontWeight="550">
-                  <text x="103" y="35">Seu WhatsApp</text>
-                  <text x="297" y="35">Cofre de chaves</text>
-                  <text x="200" y="180" fontSize="15">Worker do Malote</text>
-                  <text x="72" y="533" fontSize="13">Operador</text>
-                  <text x="200" y="533" fontSize="13">Seu assistente</text>
-                  <text x="328" y="533" fontSize="13">Banco de dados</text>
-                  <text x="200" y="696" fontSize="13">Código público</text>
-                  <text x="200" y="768" fontSize="13">Build reproduzível</text>
-                  <text x="200" y="840" fontSize="13">Digest da imagem</text>
-                  <text x="200" y="912" fontSize="13">Atestado do Google</text>
-                  <text x="200" y="984" fontSize="13">Seu navegador confere</text>
-                </g>
-                <g fill="var(--site-muted)" stroke="none" textAnchor="middle" fontSize="11">
-                  <text x="103" y="53">no celular</text>
-                  <text x="297" y="53">Google Secret Manager</text>
-                  <text x="97" y="92" textAnchor="end">mensagens</text>
-                  <text x="291" y="86" textAnchor="end">chaves só para a imagem</text><text x="291" y="100" textAnchor="end">da lista pública</text>
-                  <text x="200" y="203">recebe, cifra e responde</text>
-                  <text x="72" y="552">nós, Cora Assist</text>
-                  <text x="200" y="552">Claude e outros</text>
-                  <text x="328" y="552">fora da caixa</text>
-                  <text x="72" y="590">sem entrada</text><text x="72" y="605">sem SSH, sem debug</text>
-                  <text x="200" y="590">via mcp.malote.io</text>
-                  <text x="328" y="590">só conteúdo cifrado</text><text x="328" y="605">X25519 + AES-GCM</text>
-                  <text x="200" y="713">no GitHub, Apache 2.0</text>
-                  <text x="200" y="785">mesmo código, mesmo lacre</text>
-                  <text x="200" y="857">está na lista pública</text>
-                  <text x="200" y="929">assinado, cita esse digest</text>
-                  <text x="200" y="1001">na página Segurança</text>
-                </g>
-                <g fill="currentColor" stroke="none" fontSize="12">
-                  <text x="32" y="133" fontFamily="var(--font-mono)" fontSize="10" letterSpacing="1">CAIXA LACRADA · CONFIDENTIAL SPACE</text>
-                  <text x="44" y="256">Memória cifrada pelo processador (AMD SEV)</text>
-                  <text x="44" y="290">A conexão segura (TLS) termina aqui dentro</text>
-                  <text x="44" y="324">Sem SSH e sem depuração: não há como entrar</text>
-                  <text x="44" y="358">Só roda a imagem exata que o Google atesta</text>
-                  <text x="16" y="660" fontFamily="var(--font-mono)" fontSize="10" letterSpacing="1.5">COMO CONFERIR</text>
-                </g>
-              </svg>
-              <figcaption>O programa que recebe suas mensagens roda numa caixa lacrada. O banco fica fora dela e guarda só conteúdo cifrado. Nós ficamos fora dela, sem porta de entrada. E a caixa prova o que está rodando: um atestado assinado pelo Google, que <Link href="/seguranca#versao" className="underline underline-offset-2">seu navegador confere ao vivo</Link>.</figcaption>
+            <figure className="audit-map" aria-labelledby="audit-map-title">
+              <div className="audit-map-heading"><div><p className="site-eyebrow">ARQUITETURA / FLUXO DAS MENSAGENS</p><h3 id="audit-map-title">Uma ponte protegida, de ponta a ponta.</h3></div><span className="audit-map-tag">Código aberto · Apache 2.0</span></div>
+              <div className="audit-flow">
+                <div className="audit-endpoint"><span className="audit-icon" aria-hidden="true">▤</span><strong>Seu WhatsApp</strong><p>Suas conversas<br />e arquivos.</p></div>
+                <div className="audit-connector"><span>mensagens</span><i aria-hidden="true">→</i></div>
+                <div className="audit-enclave">
+                  <div className="audit-enclave-label"><svg width="16" height="18" viewBox="0 0 20 22" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><rect x="3" y="9" width="14" height="11" rx="2"/><path d="M6 9V6a4 4 0 0 1 8 0v3"/></svg> ÁREA PROTEGIDA</div>
+                  <strong className="audit-malote">Malote</strong><p>Recebe, cifra e responde.</p>
+                  <div className="audit-enclave-detail"><span>Google Confidential Space</span><span>Memória cifrada · TLS aqui dentro</span></div>
+                </div>
+                <div className="audit-connector"><span>via MCP</span><i aria-hidden="true">→</i></div>
+                <div className="audit-endpoint"><span className="audit-icon" aria-hidden="true">✳</span><strong>Seu assistente</strong><p>Claude ou outro<br />cliente MCP.</p></div>
+              </div>
+              <div className="audit-boundaries">
+                <div><span className="audit-boundary-symbol" aria-hidden="true">⌘</span><div><strong>Chaves sob condição</strong><p>O cofre do Google libera as chaves só para imagens na lista pública.</p></div></div>
+                <div><span className="audit-boundary-symbol" aria-hidden="true">▥</span><div><strong>Banco fora da área protegida</strong><p>O conteúdo sai do Malote cifrado com X25519 + AES-256-GCM.</p></div></div>
+                <div><span className="audit-boundary-symbol" aria-hidden="true">×</span><div><strong>Operação sem acesso interno</strong><p>A equipe do Malote fica de fora. Sem SSH e sem depuração.</p></div></div>
+              </div>
+              <div className="audit-proof">
+                <div className="audit-proof-intro"><p className="site-eyebrow">DA FONTE À PROVA</p><p>Você confere o que roda.</p></div>
+                <ol>
+                  <li><span>01</span><strong>Código público</strong><small>No GitHub</small></li>
+                  <li><span>02</span><strong>Build reproduzível</strong><small>Gera o digest da imagem</small></li>
+                  <li><span>03</span><strong>Atestado do Google</strong><small>Assina esse mesmo digest</small></li>
+                  <li><span>04</span><strong>Seu navegador</strong><small>Compara com a lista pública</small></li>
+                </ol>
+              </div>
+              <figcaption>A prova conecta o código público à imagem em execução. <Link href="/seguranca#versao">Conferir a versão ao vivo <Arrow diagonal /></Link></figcaption>
             </figure>
 
             <div className="site-audit-grid">
@@ -285,7 +177,7 @@ export default function Landing() {
         <section className="site-cta"><div className="site-container"><p className="site-eyebrow">MALOTE / WHATSAPP VIA MCP</p><h2>Traga o contexto das conversas<br />para o seu próximo passo.</h2><Link className="site-button" href="/auth/sign-up">Criar minha conta <Arrow diagonal /></Link></div></section>
       </main>
 
-      <footer className="site-container site-footer"><div className="site-footer-top"><Logo /><div className="site-footer-company"><p>Conexão entre seu WhatsApp<br />e assistentes compatíveis com MCP.</p><p>Operado por Cora Assist Ltda<br />CNPJ 69.708.277/0001-70</p><a href="mailto:contato@coraassist.com">contato@coraassist.com</a></div><nav aria-label="Navegação do rodapé"><a href="#como-funciona">Como funciona</a><Link href="/seguranca">Segurança e transparência</Link><Link href="/privacidade">Privacidade</Link><Link href="/termos">Termos de uso</Link><a href="mailto:contato@coraassist.com">Contato</a><Link href="/auth/sign-in">Acessar painel <Arrow diagonal /></Link></nav></div><div className="site-footer-bottom"><span>© {new Date().getFullYear()} Malote</span><p>Serviço independente. Sem afiliação com WhatsApp, Meta ou Anthropic.</p></div></footer>
+      <footer className="site-container site-footer"><div className="site-footer-top"><Logo /><div className="site-footer-company"><p>Conexão entre seu WhatsApp<br />e assistentes compatíveis com MCP.</p><p>Operado pelo Malote<br />CNPJ 69.708.277/0001-70</p><a href="mailto:contato@coraassist.com">contato@coraassist.com</a></div><nav aria-label="Navegação do rodapé"><a href="#como-funciona">Como funciona</a><Link href="/seguranca">Segurança e transparência</Link><Link href="/privacidade">Privacidade</Link><Link href="/termos">Termos de uso</Link><a href="mailto:contato@coraassist.com">Contato</a><Link href="/auth/sign-in">Acessar painel <Arrow diagonal /></Link></nav></div><div className="site-footer-bottom"><span>© {new Date().getFullYear()} Malote</span><p>Serviço independente. Sem afiliação com WhatsApp, Meta ou Anthropic.</p></div></footer>
     </div>
   );
 }
