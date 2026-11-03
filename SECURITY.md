@@ -34,7 +34,7 @@ Fora do escopo:
 
 - o WhatsApp e os servidores da Meta;
 - vulnerabilidades do Baileys ou de outras dependências que não afetem o Malote (relate ao projeto original; se afetarem o Malote, queremos saber);
-- a infraestrutura de terceiros (Fly.io, Neon, GitHub) e os clientes MCP (Claude Code, Claude Desktop, `mcp-remote`);
+- a infraestrutura de terceiros (Google Cloud, Neon, GitHub) e os clientes MCP (Claude Code, Claude Desktop, `mcp-remote`);
 - banimento ou restrição de contas pelo WhatsApp: é um risco conhecido e documentado do uso de cliente não oficial;
 - negação de serviço por volume, spam, engenharia social e ataques físicos;
 - as limitações listadas abaixo, a menos que você encontre uma forma de explorá-las além do que está descrito.
@@ -54,7 +54,7 @@ O modelo completo está em https://malote.io/seguranca. Estas são limitações 
 - **Metadados em claro.** JIDs/LIDs, números de telefone, horários, tipo e direção das mensagens, marcas de editada/apagada, IDs de mensagens citadas, tipo e tamanho dos arquivos baixados, além do número, nome e status da conexão, ficam sem cifra no banco.
 - **Fila de comandos com texto claro.** Envios, respostas e downloads levam conteúdo em claro no `payload` da tabela `commands` enquanto são processados. O payload é apagado quando o comando termina ou expira e as linhas concluídas são removidas, e um comando interrompido no meio da execução (por exemplo, se o worker cair) tem o payload apagado quando o worker reinicia ou depois de 10 minutos. Até lá, o conteúdo fica no banco.
 - **`/api/transparency` é autodeclarado.** O commit e a referência de imagem exibidos são informados pelos próprios servidores. Isso ajuda a acompanhar mudanças, mas não é atestação independente do que está rodando.
-- **Sem enclave nem atestação remota (ainda).** O build do worker é reproduzível e verificado no CI, mas não há como provar hoje, de fora, que a imagem em produção é a construída a partir de um commit público. Rodar o worker em enclave com atestação remota está planejado. O workflow de deploy com atestado de proveniência existe no repositório, mas está desativado no momento.
+- **Atestação do worker, não da web.** O worker roda no Google Confidential Space e oferece atestação remota assinada pelo Google, verificável na página Segurança. A garantia depende do hardware e do Google, e da conferência do digest com a lista pública de imagens confiadas. Ela não cobre o site e o painel no Cloud Run, nem equivale a um atestado de proveniência do build. Os operadores podem autorizar novas imagens; a lista pública registra os digests confiados.
 - **Token com acesso total.** Um token `mlt_...` lê o histórico e envia mensagens; não há escopo somente leitura. Revogar um token impede novas chamadas, mas não recolhe dados já entregues ao cliente MCP.
 - **Perda de todos os tokens.** Sem um token válido, a chave privada não pode ser aberta; recuperar o acesso exige gerar uma chave nova, o que apaga o histórico cifrado com a anterior.
 - **Limites de envio em memória.** Os contadores de 10 envios/minuto e 200/dia ficam na memória do worker e zeram quando ele reinicia.

@@ -214,7 +214,7 @@ O CI (`.github/workflows/ci.yml`) roda em todo push e pull request:
 - **`test`**: `pnpm install --frozen-lockfile`, `pnpm typecheck` e `pnpm test`, com um Postgres 17 como serviço (os testes de integração rodam).
 - **`reproducible-worker`**: constrói a imagem do worker duas vezes do zero e exige o mesmo digest (veja abaixo).
 
-O workflow `.github/workflows/deploy.yml` (migrar, construir, atestar proveniência e publicar por digest no Fly.io) existe no repositório mas **está desativado no GitHub** no momento. Por isso, hoje não há atestados de proveniência publicados para as imagens em produção.
+O workflow `.github/workflows/deploy.yml` descreve o fluxo legado de publicação no Fly.io. Ele não é o caminho de publicação da hospedagem atual no Google Cloud. Para publicar a web no Cloud Run ou atualizar o worker no Confidential Space, veja [infra/gcp/README.md](infra/gcp/README.md). A atestação remota do enclave e um atestado de proveniência do build são provas diferentes; a existência de um não implica a do outro.
 
 ## Imagem do worker reproduzível
 
@@ -247,11 +247,18 @@ jq -r '."containerimage.digest"' /tmp/meta.json
 
 Compare o resultado com o digest do resumo do job `reproducible-worker` na execução de **push** daquele commit (em pull requests, o `GIT_SHA` usado pelo CI é o do merge commit, não o do branch). `GIT_SHA` entra na configuração da imagem, então precisa ser o hash completo do commit. Se os digests divergirem, `python3 scripts/diff-oci.py a.tar b.tar` mostra onde.
 
-**O que isso prova e o que não prova:** um digest igual mostra que aquela imagem vem daquele código. Não prova que é essa imagem que roda em produção. Hoje, `/api/transparency` informa o commit e a referência da imagem que os próprios servidores declaram, o que **não é uma atestação independente**. Execução em enclave com atestação remota está planejada, mas ainda não existe.
+**O que isso prova e o que não prova:** um digest igual mostra que aquela imagem vem daquele código. Não prova sozinho que é essa imagem que roda em produção. `/api/transparency` informa versões autodeclaradas. O worker também oferece atestação remota do Google Confidential Space, que vincula a imagem em execução a um digest; a página [Segurança](https://malote.io/seguranca#versao) permite verificar a assinatura e comparar esse digest com a lista pública. Essa proteção depende do Google e do hardware, e não atesta o código da web no Cloud Run.
 
 ## Hospedagem
 
-O serviço em https://malote.io roda no [Fly.io](https://fly.io) na região `gru` (São Paulo): `fly.web.toml` (app `malote-web`) e `fly.worker.toml` (app `malote-worker`, uma única máquina, sem porta HTTP). O banco é Postgres na Neon. Além do WhatsApp e do banco, o worker faz uma chamada a `https://api.ipify.org` ao iniciar para registrar o IP de saída e consulta a versão mais recente do protocolo do WhatsApp Web pelo Baileys.
+O serviço usa o projeto Google Cloud `malote-513023`:
+
+| Componente | Produção | Staging |
+| --- | --- | --- |
+| Site e painel (Cloud Run) | `malote-web`, `us-east1`, https://malote.io | `malote-web-staging`, `southamerica-east1` |
+| Worker (Confidential Space) | `malote-enclave-production`, `southamerica-east1-a`, https://mcp.malote.io | `malote-enclave-staging`, mesma zona, https://mcp-staging.malote.io |
+
+O banco é Postgres na Neon. O Cloud Run hospeda o site e o painel; MCP, tokens e mídias são atendidos pelo enclave. As imagens da web ficam em `southamerica-east1-docker.pkg.dev/malote-513023/malote/web`; as do worker, em `ghcr.io/malote-mcp/malote/worker`. Os arquivos `fly.web.toml` e `fly.worker.toml` são configurações legadas, não descrevem a produção atual. Veja o [procedimento de publicação](infra/gcp/README.md).
 
 ## Segurança
 
