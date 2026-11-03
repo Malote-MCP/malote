@@ -69,9 +69,9 @@
 .site-capabilities article > p { margin-top: 14px; margin-bottom: 28px; color: var(--site-muted); font-size: 13px; }
 .site-capabilities blockquote { border-top: 1px solid var(--site-line); padding-top: 18px; margin-top: auto; font-size: 12px; line-height: 1.8; }
 .site-capabilities blockquote span { display: block; font-family: var(--font-mono); font-size: 10px; letter-spacing: .7px; color: var(--site-muted); margin-bottom: 8px; }
-.site-connection { background: #edf2e7; border-block: 1px solid var(--site-line); scroll-margin-top: 24px; }
+.site-connection { background: #f5f3ed; border-block: 1px solid var(--site-line); scroll-margin-top: 24px; }
 .site-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; list-style: none; padding: 0; margin-top: 45px; }
-.site-step-number { display: block; font-family: var(--font-mono); font-size: 12px; border-bottom: 1px solid #c8d5c0; padding-bottom: 17px; margin-bottom: 22px; }
+.site-step-number { display: block; font-family: var(--font-mono); font-size: 12px; border-bottom: 1px solid #dcded5; padding-bottom: 17px; margin-bottom: 22px; }
 .site-steps p { font-size: 13px; margin-top: 12px; color: var(--site-muted); }
 .site-protocol { display: flex; justify-content: space-between; align-items: center; gap: 40px; margin-top: 40px; padding-top: 24px; border-top: 1px solid #c8d5c0; }
 .site-protocol p { max-width: 640px; font-size: 12px; color: var(--site-muted); }

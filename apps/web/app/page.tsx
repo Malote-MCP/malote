@@ -66,7 +66,10 @@ export default function Landing() {
         <section id="como-funciona" className="site-connection" aria-labelledby="conexao-title"><div className="site-container site-section">
           <div className="site-section-heading"><p className="site-eyebrow">01 / A CONEXÃO</p><h2 id="conexao-title">Do celular ao assistente,<br />em três etapas.</h2></div>
           <ol className="site-steps">{steps.map((step, i) => <li key={step.title}><span className="site-step-number">0{i + 1}</span><h3>{step.title}</h3><p>{step.body}</p></li>)}</ol>
-          <details className="site-tools-compact"><summary>Para quem integra: 8 ferramentas MCP <span aria-hidden="true">+</span></summary><dl className="site-tool-list">{tools.map(([name, desc]) => <div key={name}><dt><code>{name}</code></dt><dd>{desc}</dd></div>)}</dl></details>
+          <div id="ferramentas" className="site-tool-catalogue" aria-labelledby="tools-title">
+            <div className="site-tool-catalogue-heading"><h3 id="tools-title">O que seu assistente pode fazer</h3><span>{tools.length} ferramentas MCP</span></div>
+            <dl className="site-tool-catalogue-grid">{tools.map(([name, desc]) => <div key={name}><dt>{desc}</dt><dd><code>{name}</code></dd></div>)}</dl>
+          </div>
         </div></section>
 
 
