@@ -21,7 +21,7 @@ const date = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("pt
 const daysLeft = (iso: string | null) => (iso ? Math.max(0, Math.ceil((new Date(iso).getTime() - Date.now()) / 86400_000)) : 0);
 
 const notices: Record<string, string> = {
-  ok: "Pagamento recebido pelo Asaas. A confirmação chega em instantes (Pix) ou na data da primeira cobrança (cartão).",
+  ok: "Pagamento enviado ao Asaas. No Pix, o acesso é liberado em instantes; no cartão, a assinatura começa e a primeira cobrança acontece quando o seu acesso atual terminar.",
   cancelado: "Pagamento cancelado. Nada foi cobrado.",
   expirado: "O link de pagamento expirou. Abra de novo quando quiser.",
 };
@@ -31,10 +31,10 @@ export function BillingCard({ b }: { b: BillingView }) {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  async function subscribe(plan: "monthly" | "yearly") {
-    setBusy(plan);
+  async function subscribe(plan: "monthly" | "yearly", method: "card" | "pix") {
+    setBusy(`${plan}-${method}`);
     setError(null);
-    const res = await fetch("/api/billing/checkout", { method: "POST", body: JSON.stringify({ plan }) }).catch(() => null);
+    const res = await fetch("/api/billing/checkout", { method: "POST", body: JSON.stringify({ plan, method }) }).catch(() => null);
     const body = (await res?.json().catch(() => null)) as { url?: string; error?: string } | null;
     if (!res?.ok || !body?.url) {
       setBusy(null);
@@ -64,10 +64,13 @@ export function BillingCard({ b }: { b: BillingView }) {
     detail = "Cortesia do Malote, sem prazo para acabar.";
   } else if (b.status === "active" && b.hasSubscription) {
     headline = `Plano ${b.plan === "yearly" ? "anual" : "mensal"} ativo`;
-    detail = `Acesso garantido até ${date(b.accessUntil)}. A renovação é automática no cartão; no Pix, o Asaas manda a cobrança por e-mail.`;
+    detail = `Acesso garantido até ${date(b.accessUntil)}. A renovação é automática no cartão.`;
   } else if (b.hasAccess && b.status === "trial") {
     headline = `Teste grátis: ${daysLeft(b.accessUntil)} ${daysLeft(b.accessUntil) === 1 ? "dia" : "dias"}`;
     detail = `Seu acesso vai até ${date(b.accessUntil)}. Assine antes para não parar; a primeira cobrança só acontece quando o teste terminar.`;
+  } else if (b.hasAccess && b.status === "active") {
+    headline = "Pago até " + date(b.accessUntil);
+    detail = "Pagamento por Pix, sem renovação automática. Para continuar depois dessa data, pague o próximo período abaixo ou assine no cartão.";
   } else if (b.hasAccess) {
     headline = "Acesso até " + date(b.accessUntil);
     detail = b.status === "canceled" ? "Assinatura cancelada: você usa até o fim do período pago." : "Pagamento pendente: regularize para não perder o acesso.";
@@ -89,23 +92,36 @@ export function BillingCard({ b }: { b: BillingView }) {
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           {(
             [
-              ["monthly", "Mensal", "R$ 29,90", "por mês"],
-              ["yearly", "Anual", "R$ 299", "por ano · 2 meses grátis"],
+              ["monthly", "Mensal", "R$ 29,90", "por mês", "1 mês"],
+              ["yearly", "Anual", "R$ 299", "por ano · 2 meses grátis", "1 ano"],
             ] as const
-          ).map(([id, name, price, per]) => (
-            <button
-              key={id}
-              onClick={() => subscribe(id)}
-              disabled={!b.paymentsEnabled || busy !== null}
-              className="rounded-2xl border border-line bg-white p-4 text-left hover:border-moss disabled:opacity-60"
-            >
+          ).map(([id, name, price, per, period]) => (
+            <div key={id} className="rounded-2xl border border-line bg-white p-4">
               <span className="text-sm text-ink-3">{name}</span>
               <span className="mt-1 block font-display text-2xl font-semibold">{price}</span>
               <span className="text-xs text-ink-3">{per}</span>
-              <span className="mt-3 block text-sm font-medium text-moss">{busy === id ? "Abrindo o Asaas…" : "Assinar com Pix ou cartão →"}</span>
-            </button>
+              <div className="mt-4 flex flex-col gap-2">
+                <button
+                  onClick={() => subscribe(id, "card")}
+                  disabled={!b.paymentsEnabled || busy !== null}
+                  className="rounded-full bg-ink px-4 py-2 text-left text-sm font-medium text-white hover:opacity-90 disabled:opacity-60"
+                >
+                  {busy === `${id}-card` ? "Abrindo o Asaas…" : "Assinar no cartão →"}
+                </button>
+                <button
+                  onClick={() => subscribe(id, "pix")}
+                  disabled={!b.paymentsEnabled || busy !== null}
+                  className="rounded-full border border-line px-4 py-2 text-left text-sm font-medium text-moss hover:border-moss disabled:opacity-60"
+                >
+                  {busy === `${id}-pix` ? "Abrindo o Asaas…" : `Pagar ${period} no Pix →`}
+                </button>
+              </div>
+            </div>
           ))}
         </div>
+      )}
+      {showPlans && b.paymentsEnabled && (
+        <p className="mt-3 text-xs text-ink-3">No cartão, a assinatura renova sozinha e você pode cancelar quando quiser. No Pix, você paga um período por vez, sem renovação automática.</p>
       )}
       {showPlans && !b.paymentsEnabled && <p className="mt-3 text-xs text-ink-3">Os pagamentos abrem em breve.</p>}
       {b.hasSubscription && b.status === "active" && (

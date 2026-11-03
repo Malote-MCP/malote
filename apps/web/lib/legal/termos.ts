@@ -432,7 +432,7 @@ export const termos: LegalDocument = {
         },
         {
           "type": "p",
-          "text": "13.6. Os planos são renovados automaticamente ao fim de cada período, pelo mesmo prazo. No cartão de crédito, a cobrança é feita automaticamente na data de renovação. No Pix, o Asaas envia a cobrança ao e-mail do Usuário antes do vencimento. Quando o plano é contratado durante o teste ou durante um período já pago, a primeira cobrança ocorre ao fim desse período."
+          "text": "13.6. No cartão de crédito, o plano é contratado como assinatura e renovado automaticamente ao fim de cada período, pelo mesmo prazo, com a cobrança feita automaticamente na data de renovação. Quando a assinatura é contratada durante o teste ou durante um período já pago, a primeira cobrança ocorre ao fim desse período. No Pix, cada pagamento corresponde a um único período do plano escolhido, acrescido ao fim do acesso já existente, sem renovação automática."
         },
         {
           "type": "p",

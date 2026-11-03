@@ -46,21 +46,25 @@ function asaasDateTime(d: Date) {
 }
 
 /**
- * Hosted checkout for a recurring plan. The first charge is due when the trial (or the current paid
- * period) ends, so nobody pays for days they already have.
+ * Hosted checkout. Card: a recurring plan whose first charge is due when the trial (or the current
+ * paid period) ends, so nobody pays for days they already have. Pix: one payment for one period,
+ * added after the access the user already has.
  */
 export async function createCheckout(opts: {
   userId: string;
   email: string;
   name: string;
   plan: PlanId;
+  method: "card" | "pix";
   firstDueAt: Date;
   publicUrl: string;
 }) {
   const plan = PLANS[opts.plan];
+  // Asaas only renews on card; Pix is a one-off payment for one period.
+  const card = opts.method === "card";
   const created = await call<{ id: string; link?: string }>("POST", "/checkouts", {
-    billingTypes: ["CREDIT_CARD", "PIX"],
-    chargeTypes: ["RECURRENT"],
+    billingTypes: [card ? "CREDIT_CARD" : "PIX"],
+    chargeTypes: [card ? "RECURRENT" : "DETACHED"],
     minutesToExpire: 120,
     externalReference: opts.userId,
     callback: {
@@ -77,7 +81,7 @@ export async function createCheckout(opts: {
         externalReference: opts.plan,
       },
     ],
-    subscription: { cycle: plan.cycle, nextDueDate: asaasDateTime(opts.firstDueAt) },
+    ...(card ? { subscription: { cycle: plan.cycle, nextDueDate: asaasDateTime(opts.firstDueAt) } } : {}),
     customerData: { name: opts.name, email: opts.email },
   });
   return { id: created.id, url: created.link ?? `${checkoutHost()}/checkoutSession/show?id=${created.id}` };

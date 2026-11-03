@@ -8,13 +8,14 @@ export const dynamic = "force-dynamic";
 
 const publicUrl = () => process.env.PUBLIC_URL ?? "https://malote.io";
 
-/** Starts an Asaas checkout for { plan: "monthly" | "yearly" } and returns its URL. */
+/** Starts an Asaas checkout for { plan: "monthly" | "yearly", method: "card" | "pix" } and returns its URL. */
 export async function POST(req: Request) {
   const user = await currentUser();
   if (!user) return Response.json({ error: "Unauthorized" }, { status: 401 });
   if (!asaasConfigured()) return Response.json({ error: "Pagamentos ainda não estão disponíveis." }, { status: 503 });
-  const body = (await req.json().catch(() => null)) as { plan?: unknown } | null;
+  const body = (await req.json().catch(() => null)) as { plan?: unknown; method?: unknown } | null;
   if (!isPlan(body?.plan)) return Response.json({ error: "Plano inválido." }, { status: 400 });
+  const method = body.method === "pix" ? "pix" : "card";
   const row = await ensureBilling(db, user.id);
   if (row.freeForever) return Response.json({ error: "Sua conta já é gratuita." }, { status: 400 });
   if (row.asaasSubscriptionId && row.status === "active") {
@@ -28,6 +29,7 @@ export async function POST(req: Request) {
       email: user.email,
       name: user.name || user.email.split("@")[0],
       plan: body.plan,
+      method,
       firstDueAt,
       publicUrl: publicUrl(),
     });

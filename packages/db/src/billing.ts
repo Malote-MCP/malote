@@ -182,6 +182,18 @@ export async function applyPayment(
   return refresh(db, userId);
 }
 
+/**
+ * A one-off (Pix) payment buys one period of the plan the user chose at checkout, starting when the
+ * access they already have (trial or paid, without the grace days) ends.
+ */
+export async function applyOneTimePayment(db: Db, userId: string, p: { customerId?: string | null }) {
+  const [r] = await db.select().from(billing).where(eq(billing.userId, userId));
+  if (!r) return null;
+  const paidEnd = r.paidUntil ? r.paidUntil.getTime() - GRACE_DAYS * DAY : 0;
+  const start = new Date(Math.max(Date.now(), r.trialEndsAt.getTime(), paidEnd));
+  return applyPayment(db, userId, { dueDate: start.toISOString(), plan: isPlan(r.plan) ? r.plan : "monthly", customerId: p.customerId });
+}
+
 export async function setBillingStatus(db: Db, userId: string, status: "past_due" | "canceled", opts: { clearSubscription?: boolean; revokePaid?: boolean } = {}) {
   const [r] = await db.select().from(billing).where(eq(billing.userId, userId));
   if (!r) return null;

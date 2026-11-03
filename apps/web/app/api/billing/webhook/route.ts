@@ -1,5 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
-import { applyPayment, billingEvents, findBillingFor, setBillingStatus, type Db } from "@malote/db";
+import { applyOneTimePayment, applyPayment, billingEvents, findBillingFor, setBillingStatus, type Db } from "@malote/db";
 import { getSubscription, planOfCycle } from "@/lib/asaas";
 import { db } from "@/lib/db";
 
@@ -36,6 +36,16 @@ async function handle(tx: Db, e: Event) {
   switch (e.event) {
     case "PAYMENT_CONFIRMED":
     case "PAYMENT_RECEIVED": {
+      if (p && !p.subscription) {
+        // One-off Pix payment from our checkout.
+        const row = await findBillingFor(tx, { userId: p.externalReference, checkoutId: p.checkoutSession });
+        if (!row) {
+          if (p.checkoutSession) throw new Error(`no user for checkout ${p.checkoutSession}`);
+          return; // a charge not created by Malote
+        }
+        await applyOneTimePayment(tx, row.userId, { customerId: p.customer });
+        return;
+      }
       if (!p?.subscription || !p.dueDate) return;
       const sub = await getSubscription(p.subscription);
       const row = await findBillingFor(tx, {
