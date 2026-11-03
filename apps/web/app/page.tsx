@@ -118,7 +118,7 @@ export default function Landing() {
           </div>
         </section>
 
-        <section id="preco" className="site-container site-section" aria-labelledby="preco-title">
+        <section id="preco" className="site-container site-section site-price-section" aria-labelledby="preco-title">
           <div className="site-section-heading"><p className="site-eyebrow">03 / PREÇO</p><h2 id="preco-title">Um plano só.<br />15 dias para testar.</h2><p>Tudo liberado desde o primeiro dia, sem cartão para começar. Pague com Pix ou cartão pelo Asaas e cancele quando quiser. Indicou alguém que conectou o WhatsApp? Você ganha mais 15 dias.</p></div>
           <div className="site-pricing">
             <div><span>Mensal</span><strong>R$ 29,90</strong><p>por mês</p></div>
