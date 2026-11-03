@@ -220,3 +220,10 @@
   border-image: linear-gradient(var(--site-line), var(--site-line)) 1 / 1px 0 0 / 0 100vw;
 }
 .malote-site { overflow-x: clip; }
+
+/* Alternating full-width bands: paper, band, paper, band, paper. Sections that live inside the
+   centred container paint the band past their edges with a clipped shadow. */
+.malote-site { --site-band: #f1f0ea; }
+.site-connection { background: var(--site-band); }
+#preco { background: var(--site-band); box-shadow: 0 0 0 100vmax var(--site-band); clip-path: inset(0 -100vmax); }
+.site-pricing > div { background: var(--site-paper); }
