@@ -23,3 +23,4 @@ export function createDb(pool: pg.Pool): Db {
 }
 
 export const COMMANDS_CHANNEL = "malote_commands";
+export * from "./admin-analytics.ts";

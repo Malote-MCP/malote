@@ -273,3 +273,50 @@ Veja [CONTRIBUTING.md](CONTRIBUTING.md).
 [Apache License 2.0](LICENSE).
 
 WhatsApp é marca registrada da Meta Platforms, Inc. O Malote não tem relação com a Meta nem com o WhatsApp. Claude é um produto da Anthropic; o Malote também não é afiliado à Anthropic.
+
+
+## Administração e análises
+
+Configure `ADMIN_EMAILS` com os e-mails dos operadores separados por vírgula para acessar `/admin`.
+O painel permite buscar por e-mail/ID e filtrar por período (até 366 dias), conexão atual e presença de
+envios no período. Os filtros afetam as tabelas de contas, métricas de uso e exportação Excel; os
+indicadores gerais do serviço permanecem globais.
+
+O DAU mostrado é **DAU de envio**: contas distintas com pelo menos um envio bem-sucedido de texto
+ou arquivo pelo Malote naquele dia UTC. Não mede leituras via MCP, sessões conectadas nem mensagens
+enviadas diretamente no WhatsApp. As contagens existem desde a implantação de `send_counts`, sem
+reconstrução retroativa. Excluir uma conta apaga suas contagens e altera os totais históricos.
+O worker registra a contagem após o envio; falhas nessa gravação são registradas no log e podem
+causar subcontagem. A exportação `.xlsx` contém resumo e filtros, totais por dia, por usuário e por
+usuário/dia, sem conteúdo de mensagens.
+
+A exclusão administrativa exige digitar o e-mail da conta, desvincula o WhatsApp e apaga dados,
+tokens, limites próprios e login. A própria conta do operador deve ser excluída pelas configurações
+pessoais em `/app`.
+
+### MCP administrativo
+
+O MCP de análises fica na **web**, em `https://malote.io/api/admin/mcp`, separado do MCP de WhatsApp
+no enclave. Configure `ADMIN_MCP_TOKEN` no servidor web com um segredo aleatório de pelo menos
+32 caracteres (por exemplo, gerado com `openssl rand -hex 32`). A ausência dessa variável desativa
+o acesso. Esse segredo permite consultar e-mails e métricas de todas as contas, portanto deve ser
+guardado como senha. Trocar a variável e reiniciar o serviço revoga a credencial anterior.
+
+Conecte um cliente com suporte a Streamable HTTP e cabeçalho Bearer:
+
+```json
+{
+  "mcpServers": {
+    "malote-admin": {
+      "url": "https://malote.io/api/admin/mcp",
+      "headers": { "Authorization": "Bearer SEU_ADMIN_MCP_TOKEN" }
+    }
+  }
+}
+```
+
+As ferramentas `admin_analytics` (resumo, série diária e contas) e `admin_user_daily` (envios por
+usuário/dia, apenas dias com envios) aceitam `from`, `to` (AAAA-MM-DD inclusivos, UTC), `query`
+(trecho literal do e-mail ou ID exato), `status` (`connected`, `logged_out`, `pending`, `qr`, `error`,
+`none`) e `activity` (`active`, `inactive`). O padrão é os últimos 30 dias incluindo hoje. São
+ferramentas somente de consulta; não oferecem exclusão nem alterações de limites.
