@@ -33,7 +33,6 @@ function Arrow({ diagonal = false }: { diagonal?: boolean }) {
 export default function Landing() {
   return (
     <div className="malote-site">
-      <GitHubStar />
       <a href="#conteudo" className="site-skip">Pular para o conteúdo</a>
       <header className="site-header">
         <div className="site-container site-header-inner">
@@ -130,10 +129,10 @@ export default function Landing() {
 
         <section id="perguntas" className="site-container site-section site-faq" aria-labelledby="perguntas-title"><div><p className="site-eyebrow">04 / ANTES DE CONECTAR</p><h2 id="perguntas-title">Perguntas<br />frequentes.</h2></div><div className="site-questions">{questions.map(item => <details key={item.q}><summary>{item.q}<span aria-hidden="true">+</span></summary><p>{item.a}</p></details>)}</div></section>
 
-        <section className="site-cta"><div className="site-container"><p className="site-eyebrow">MALOTE / WHATSAPP VIA MCP</p><h2>Pronto para conectar?</h2><Link className="site-button" href="/auth/sign-up">Criar minha conta <Arrow diagonal /></Link></div></section>
+        <section className="site-cta"><div className="site-container"><div className="site-cta-inner"><div><p className="site-eyebrow">SEU WHATSAPP, COM MAIS CONTEXTO</p><h2>Pronto para conectar?</h2></div><Link className="site-button" href="/auth/sign-up">Criar minha conta <Arrow diagonal /></Link></div></div></section>
       </main>
 
-      <footer className="site-container site-footer"><div className="site-footer-top"><Logo /><div className="site-footer-company"><p>Conexão entre seu WhatsApp<br />e assistentes compatíveis com MCP.</p><p>Operado pelo Malote<br />CNPJ 69.708.277/0001-70</p><a href="mailto:contato@coraassist.com">contato@coraassist.com</a></div><nav aria-label="Navegação do rodapé"><a href="#como-funciona">Como funciona</a><Link href="/seguranca">Segurança e transparência</Link><Link href="/privacidade">Privacidade</Link><Link href="/termos">Termos de uso</Link><a href="mailto:contato@coraassist.com">Contato</a><Link href="/auth/sign-in">Acessar painel <Arrow diagonal /></Link></nav></div><div className="site-footer-bottom"><span>© {new Date().getFullYear()} Malote</span><p>Serviço independente. Sem afiliação com WhatsApp, Meta ou Anthropic.</p></div></footer>
+      <footer className="site-container site-footer"><div className="site-footer-top"><Logo /><div className="site-footer-company"><p>Conexão entre seu WhatsApp<br />e assistentes compatíveis com MCP.</p><p>Operado pelo Malote<br />CNPJ 69.708.277/0001-70</p><a href="mailto:contato@coraassist.com">contato@coraassist.com</a></div><nav aria-label="Navegação do rodapé"><a href="#como-funciona">Como funciona</a><Link href="/seguranca">Segurança e transparência</Link><Link href="/privacidade">Privacidade</Link><Link href="/termos">Termos de uso</Link><a href="mailto:contato@coraassist.com">Contato</a><Link href="/auth/sign-in">Acessar painel <Arrow diagonal /></Link></nav></div><div className="site-footer-bottom"><span>© {new Date().getFullYear()} Malote</span><p>Serviço independente. Sem afiliação com WhatsApp, Meta ou Anthropic.</p><GitHubStar /></div></footer>
     </div>
   );
 }

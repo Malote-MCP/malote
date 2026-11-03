@@ -29,7 +29,6 @@ function item(text: string) {
 export function LegalPage({ doc, eyebrow, lead, other }: { doc: LegalDocument; eyebrow: string; lead: string; other: { href: string; label: string } }) {
   return (
     <div className="malote-site">
-      <GitHubStar />
       <a href="#conteudo" className="site-skip">Pular para o conteúdo</a>
       <header className="site-header">
         <div className="site-container site-header-inner">
@@ -82,6 +81,7 @@ export function LegalPage({ doc, eyebrow, lead, other }: { doc: LegalDocument; e
             <Link href="/termos">Termos</Link> · <Link href="/privacidade">Privacidade</Link> · <Link href="/seguranca">Segurança</Link> ·{" "}
             <Link href="/">Voltar ao produto <span aria-hidden="true">↗</span></Link>
           </span>
+          <GitHubStar />
         </div>
       </footer>
     </div>

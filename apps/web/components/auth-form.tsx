@@ -75,8 +75,8 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
       <div className="mb-8">
         <Logo />
       </div>
-      <div className="w-full max-w-sm rounded-3xl border border-line bg-white/70 p-7 shadow-[0_20px_60px_-30px_rgba(29,27,22,0.35)]">
-        <h1 className="font-display text-2xl font-semibold tracking-tight">
+      <div className="w-full max-w-sm rounded-2xl border border-line bg-white p-7 shadow-[0_16px_48px_-24px_rgba(24,46,45,0.2)]">
+        <h1 className="font-sans text-2xl font-semibold tracking-tight">
           {isSignUp ? "Crie sua conta" : "Entrar no Malote"}
         </h1>
         <p className="mt-1 text-sm text-ink-3">
@@ -87,7 +87,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
           type="button"
           onClick={google}
           disabled={pending !== null}
-          className="mt-6 flex w-full items-center justify-center gap-3 rounded-full border border-line bg-white px-4 py-2.5 font-medium hover:bg-paper disabled:opacity-60"
+          className="mt-6 flex w-full items-center justify-center gap-3 rounded-lg border border-line bg-white px-4 py-2.5 font-medium hover:bg-paper disabled:opacity-60"
         >
           <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden>
             <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.5l6.7-6.7C35.6 2.4 30.2 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.8 6.1C12.4 13.6 17.7 9.5 24 9.5z" />
@@ -129,7 +129,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
           <button
             type="submit"
             disabled={pending !== null}
-            className="w-full rounded-full bg-moss px-4 py-2.5 font-medium text-paper hover:bg-moss-2 disabled:opacity-60"
+            className="w-full rounded-lg bg-ink px-4 py-2.5 font-medium text-paper hover:bg-moss-2 disabled:opacity-60"
           >
             {pending === "email" ? "Aguarde…" : isSignUp ? "Criar conta" : "Entrar"}
           </button>
