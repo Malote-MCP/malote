@@ -1,6 +1,6 @@
 "use client";
 
-import { allowedDigestsUrl, useEnclaveVerification } from "@/lib/enclave-verification";
+import { retryEnclaveVerification, allowedDigestsUrl, useEnclaveVerification } from "@/lib/enclave-verification";
 
 export function EnclaveStatus({ enclaveUrl, env }: { enclaveUrl: string | null; env: string | null }) {
   const result = useEnclaveVerification(enclaveUrl, env);
@@ -30,7 +30,7 @@ export function EnclaveStatus({ enclaveUrl, env }: { enclaveUrl: string | null; 
       <div className="flex items-start gap-3 rounded-2xl border border-clay/40 bg-clay/10 px-4 py-3 text-sm" role="alert">
         <span aria-hidden="true" className="font-semibold text-clay">✕</span>
         <p className="text-ink-2">
-          <strong className="text-clay">Não verificado.</strong> {result.reason}
+          <strong className="text-clay">Não verificado.</strong> {result.reason} <button type="button" className="underline" onClick={retryEnclaveVerification}>Verificar novamente</button>
         </p>
       </div>
     );

@@ -1,21 +1,22 @@
 "use client";
 
-import { useEnclaveVerification } from "@/lib/enclave-verification";
+import { retryEnclaveVerification, useEnclaveVerification } from "@/lib/enclave-verification";
 
 export function VerificationBadge({ placement }: { placement: "header" | "diagram" }) {
   const result = useEnclaveVerification("https://mcp.malote.io", "production");
   const verified = result.state === "verified";
+  const label = result.state === "verified" ? "Código verificado" : result.state === "checking" ? "Conferindo…" : result.retryable ? "Verificação indisponível" : "Prova não confirmada";
   return (
     <details className={`site-verification site-verification-${placement}`} data-state={result.state}>
       <summary aria-live="polite">
         <span className="site-verification-mark" aria-hidden="true">{verified ? "✓" : result.state === "checking" ? "·" : "!"}</span>
-        <span>{verified ? "Código ↔ imagem verificados" : result.state === "checking" ? "Conferindo código e imagem…" : "Verificação indisponível"}</span>
+        <span>{label}</span>
         <span className="site-verification-expand" aria-hidden="true">⌄</span>
       </summary>
       <div className="site-verification-proof">
         <strong>{verified ? "Do commit ao worker em execução." : "Uma prova real, consultada agora."}</strong>
         {result.state === "checking" && <p>Consultando a prova do Google e a proveniência assinada do build no GitHub.</p>}
-        {result.state === "failed" && <p>{result.reason} Sem prova completa, o check não fica verde.</p>}
+        {result.state === "failed" && <p>{result.reason} </p>}
         {verified && <>
           <ol>
             <li>O Google atesta o digest do worker, com um desafio criado neste navegador.</li>
@@ -27,6 +28,7 @@ export function VerificationBadge({ placement }: { placement: "header" | "diagra
           <p>Conferido às {result.at.toLocaleTimeString("pt-BR")}. Atualiza a cada 5 min.</p>
           <p>A assinatura do Google é conferida no navegador; a proveniência, pelo servidor com Sigstore. Este check cobre o worker. O site e o painel rodam separadamente.</p>
         </>}
+        {result.state !== "checking" && <button type="button" className="site-verification-retry" onClick={retryEnclaveVerification}>Verificar novamente ↻</button>}
         <a className="site-verification-more" href="/seguranca#versao">Ver provas e limites ↗</a>
       </div>
     </details>
