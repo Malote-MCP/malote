@@ -231,3 +231,10 @@
 .site-connection { background: var(--site-band); }
 #preco { background: var(--site-band); box-shadow: 0 0 0 100vmax var(--site-band); clip-path: inset(0 -100vmax); }
 .site-pricing > div { background: var(--site-card); }
+
+/* Keep the source link and live verification together in the header. */
+.site-header-badges { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+.site-header-badges .site-verification-header { margin: 0; width: auto; order: 0; }
+.site-header-badges .site-github-star { flex-shrink: 0; }
+@media (max-width: 1100px) { .site-header-inner { flex-wrap: wrap; padding-block: 14px; gap: 12px 24px; } .site-header-badges { order: 3; justify-content: space-between; width: 100%; margin: 0; } .site-nav { margin-left: auto; } }
+@media (max-width: 600px) { .site-header-badges { gap: 8px; } .site-header-badges .site-github-star { min-height: 32px; padding: 6px 9px; font-size: 11px; } .site-header-badges .site-verification-proof { left: 0; right: auto; } }

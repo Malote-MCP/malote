@@ -37,7 +37,7 @@ export default function Landing() {
       <header className="site-header">
         <div className="site-container site-header-inner">
           <Logo />
-          <VerificationBadge placement="header" />
+          <div className="site-header-badges"><VerificationBadge placement="header" /><GitHubStar /></div>
           <nav className="site-nav" aria-label="Navegação principal">
             <a className="site-nav-section" href="#como-funciona">Como funciona</a>
             <a className="site-nav-section" href="/seguranca">Segurança</a>
