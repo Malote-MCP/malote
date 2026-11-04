@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { RotatingAssistant } from "@/components/rotating-assistant";
 import { ProductDemo } from "@/components/product-demo";
 import { repositoryUrl } from "@/lib/public-info";
 import { VerificationBadge } from "@/components/verification-badge";
@@ -52,7 +53,7 @@ export default function Landing() {
         <section className="site-container site-hero" aria-labelledby="hero-title">
           <div className="site-hero-copy">
             <p className="site-eyebrow"><span className="site-square" /> WHATSAPP CONECTADO AO SEU TRABALHO</p>
-            <h1 id="hero-title">Seu WhatsApp.<br /><span>Dentro do Claude.</span></h1>
+            <h1 id="hero-title">Seu WhatsApp.<br /><span className="site-hero-assistant-line">Dentro do <RotatingAssistant /></span></h1>
             <p className="site-lead">Busque mensagens, recupere arquivos e responda conversas sem sair do seu assistente. Conecte seu WhatsApp via MCP.</p>
             <div className="site-actions">
               <Link className="site-button" href="/auth/sign-up">Conectar meu WhatsApp <Arrow diagonal /></Link>

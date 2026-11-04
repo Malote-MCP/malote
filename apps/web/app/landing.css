@@ -176,3 +176,15 @@
   .site-cta-inner { align-items: flex-start; flex-direction: column; padding: 28px; gap: 24px; }
 }
 @media (prefers-reduced-motion: reduce) { .malote-site * { transition: none; } }
+
+/* All names share one grid cell so the headline keeps its width while rotating. */
+.site-hero-assistant-line { white-space: nowrap; }
+.assistant-rotator { display: inline-grid; vertical-align: baseline; }
+.assistant-rotator > span { grid-area: 1 / 1; visibility: hidden; opacity: 0; transform: translateY(5px); transition: opacity .28s ease, transform .28s ease; }
+.assistant-rotator > span[data-active="true"] { visibility: visible; opacity: 1; transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) { .assistant-rotator > span { transition: none; transform: none; } }
+.site-hero-copy { min-width: 0; }
+.site-hero-assistant-line { font-size: .86em; }
+@media (min-width: 851px) and (max-width: 1000px) { .site-hero-assistant-line { font-size: clamp(28px, 3.2vw, 34px); } }
+@media (max-width: 850px) { .site-hero-assistant-line { font-size: .95em; } }
+@media (max-width: 520px) { .site-hero .site-hero-copy h1 { font-size: clamp(30px, 10.4vw, 42px); } .site-hero-assistant-line { font-size: .86em; } }
