@@ -219,7 +219,7 @@
 @media (max-width: 600px) { .site-pricing > div { padding: 20px 16px; } .site-pricing strong { font-size: 28px; letter-spacing: -.7px; } }
 
 /* Section dividers run edge to edge, like the header line; the border image reaches past the container. */
-.site-connection > .site-section, .site-transparency > .site-section, .site-faq, #preco {
+.site-connection > .site-section, .site-transparency > .site-section, .site-faq, #preco, .site-footer-bottom {
   border-top: 1px solid var(--site-line);
   border-image: linear-gradient(var(--site-line), var(--site-line)) 1 / 1px 0 0 / 0 100vw;
 }
