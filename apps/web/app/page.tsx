@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { RotatingAssistant } from "@/components/rotating-assistant";
 import { ProductDemo } from "@/components/product-demo";
 import { repositoryUrl } from "@/lib/public-info";
 import { VerificationBadge } from "@/components/verification-badge";
@@ -37,7 +38,7 @@ export default function Landing() {
       <header className="site-header">
         <div className="site-container site-header-inner">
           <Logo />
-          <VerificationBadge placement="header" />
+          <div className="site-header-badges"><VerificationBadge placement="header" /><GitHubStar /></div>
           <nav className="site-nav" aria-label="Navegação principal">
             <a className="site-nav-section" href="#como-funciona">Como funciona</a>
             <a className="site-nav-section" href="/seguranca">Segurança</a>
@@ -52,7 +53,7 @@ export default function Landing() {
         <section className="site-container site-hero" aria-labelledby="hero-title">
           <div className="site-hero-copy">
             <p className="site-eyebrow"><span className="site-square" /> WHATSAPP CONECTADO AO SEU TRABALHO</p>
-            <h1 id="hero-title">Seu WhatsApp.<br /><span>Dentro do Claude.</span></h1>
+            <h1 id="hero-title">Seu WhatsApp.<br /><span className="site-hero-assistant-line">Dentro do <RotatingAssistant /></span></h1>
             <p className="site-lead">Busque mensagens, recupere arquivos e responda conversas sem sair do seu assistente. Conecte seu WhatsApp via MCP.</p>
             <div className="site-actions">
               <Link className="site-button" href="/auth/sign-up">Conectar meu WhatsApp <Arrow diagonal /></Link>
@@ -118,7 +119,7 @@ export default function Landing() {
           </div>
         </section>
 
-        <section id="preco" className="site-container site-section" aria-labelledby="preco-title">
+        <section id="preco" className="site-container site-section site-price-section" aria-labelledby="preco-title">
           <div className="site-section-heading"><p className="site-eyebrow">03 / PREÇO</p><h2 id="preco-title">Um plano só.<br />15 dias para testar.</h2><p>Tudo liberado desde o primeiro dia, sem cartão para começar. Pague com Pix ou cartão pelo Asaas e cancele quando quiser. Indicou alguém que conectou o WhatsApp? Você ganha mais 15 dias.</p></div>
           <div className="site-pricing">
             <div><span>Mensal</span><strong>R$ 29,90</strong><p>por mês</p></div>
