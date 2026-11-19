@@ -188,6 +188,8 @@ async function listen() {
   await client.connect();
   await client.query(`listen ${COMMANDS_CHANNEL}`);
   log.info("listening for commands");
+  // Anything inserted while the listener was down was not notified.
+  void drain();
 }
 
 // Only one worker runs per database, so anything still "running" belonged to a previous process.
@@ -199,11 +201,14 @@ await db.execute(sql`
 const enabled = await db.select({ id: waSessions.id }).from(waSessions).where(eq(waSessions.enabled, true));
 await listen();
 void drain();
-setInterval(() => void drain(), 5000);
+// Commands arrive by NOTIFY (trigger on insert), so polling is only a safety net. Neon bills while
+// the database is awake, so periodic work stays rare: drain and heartbeats every 10 minutes.
+const IDLE_TICK_MS = 10 * 60_000;
 setInterval(() => {
+  void drain();
   for (const r of runners.values()) void r.heartbeat().catch(() => {});
   void reportWorker().catch(() => {});
-}, 60_000);
+}, IDLE_TICK_MS);
 
 // Memory usage every 5 minutes (numbers only, no user data), so a crash can be traced to a leak or not.
 const MB = 1024 * 1024;

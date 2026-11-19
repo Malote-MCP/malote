@@ -15,7 +15,7 @@ export async function GET() {
   const live = await db
     .select({ imageRef: workers.imageRef, gitSha: workers.gitSha, startedAt: workers.startedAt, seenAt: workers.seenAt })
     .from(workers)
-    .where(gt(workers.seenAt, new Date(Date.now() - 5 * 60_000)))
+    .where(gt(workers.seenAt, new Date(Date.now() - 25 * 60_000)))
     .orderBy(desc(workers.seenAt));
   return Response.json({
     source: REPO,
