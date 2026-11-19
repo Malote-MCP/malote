@@ -205,6 +205,23 @@ setInterval(() => {
   void reportWorker().catch(() => {});
 }, 60_000);
 
+// Memory usage every 5 minutes (numbers only, no user data), so a crash can be traced to a leak or not.
+const MB = 1024 * 1024;
+setInterval(() => {
+  const m = process.memoryUsage();
+  log.info(
+    {
+      rssMb: Math.round(m.rss / MB),
+      heapUsedMb: Math.round(m.heapUsed / MB),
+      heapTotalMb: Math.round(m.heapTotal / MB),
+      externalMb: Math.round(m.external / MB),
+      arrayBuffersMb: Math.round(m.arrayBuffers / MB),
+      sessions: runners.size,
+    },
+    "memory",
+  );
+}, 5 * 60_000).unref();
+
 // The enclave API (MCP, media, tokens, attestation) talks to the sessions in this process directly.
 const ops: WhatsAppOps = {
   sendText: (id, p) => connectedRunner(id).sendText(p.chatJid, p.text, { quoted: p.quoted }),
